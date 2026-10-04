@@ -63,6 +63,10 @@ function toDbEntry(e) {
     activecal: e.activeCal === '' ? null : Number(e.activeCal),
     restingcal: e.restingCal === '' ? null : Number(e.restingCal),
     bodyfat: e.bodyFat === '' ? null : Number(e.bodyFat),
+    leanmass: e.leanMass === '' || e.leanMass == null ? null : Number(e.leanMass),
+    workouttype: e.workoutType || null,
+    workoutcategory: e.workoutCategory || null,
+    workoutminutes: e.workoutMinutes === '' || e.workoutMinutes == null ? null : Number(e.workoutMinutes),
     note: e.note || null
   };
 }
@@ -79,6 +83,10 @@ function fromDbEntry(r) {
     activeCal: r.activecal ?? '',
     restingCal: r.restingcal ?? '',
     bodyFat: r.bodyfat ?? '',
+    leanMass: r.leanmass ?? '',
+    workoutType: r.workouttype || '',
+    workoutCategory: r.workoutcategory || '',
+    workoutMinutes: r.workoutminutes ?? '',
     note: r.note || ''
   };
 }
@@ -90,7 +98,7 @@ function hasValue(v) {
 function mergeEntry(existing, incoming) {
   const base = existing || {};
   const next = { ...base, id: incoming.date || base.date, date: incoming.date || base.date };
-  ['weight','calories','protein','carbs','fat','activeCal','restingCal','bodyFat','note'].forEach(key => {
+  ['weight','calories','protein','carbs','fat','activeCal','restingCal','bodyFat','leanMass','workoutType','workoutCategory','workoutMinutes','note'].forEach(key => {
     if (hasValue(incoming[key])) next[key] = incoming[key];
     else if (next[key] === undefined || next[key] === null) next[key] = '';
   });
@@ -4276,6 +4284,28 @@ function showSyncBanner(entry) {
   window._syncBannerTimer = setTimeout(()=>{ banner.style.display = 'none'; }, 6000);
 }
 
+function classifyWorkoutType(raw) {
+  const s = decodeURIComponent(raw || '').trim();
+  const n = s.toLowerCase().replace(/[_-]+/g,' ').replace(/\s+/g,' ');
+  if (!n) return '';
+  const strength = [
+    'traditional strength training','functional strength training','strength training',
+    'weight training','weightlifting','weight lifting','resistance training',
+    'cross training','crossfit','core training'
+  ];
+  if (strength.some(x => n.includes(x))) return 'strength';
+  return 'other';
+}
+
+function syncImportedWorkout(date, rawType, minutes) {
+  if (!rawType) return '';
+  const category = classifyWorkoutType(rawType);
+  let w = o20Workouts().filter(x => x.date !== date);
+  w.push({date, type:category || 'other', note:rawType, source:'health', workoutType:rawType, minutes:minutes || ''});
+  localStorage.setItem(O20_WORK_KEY, JSON.stringify(w));
+  return category;
+}
+
 async function handleURLImport() {
   const params = new URLSearchParams(window.location.search);
   // Strip thousands-separator commas (and stray whitespace) before storing —
@@ -4294,12 +4324,16 @@ async function handleURLImport() {
   const active = cleanNum(params.get('active'));
   const resting = cleanNum(params.get('resting'));
   const bodyFat = cleanNum(params.get('bodyfat'));
+  const leanMass = cleanNum(params.get('lean'));
+  const workoutType = (params.get('workouttype') || '').trim();
+  const workoutMinutes = cleanNum(params.get('workoutminutes') || params.get('duration'));
+  const workoutFlag = (params.get('workout') || '').trim();
   const d = params.get('date') || today();
 
   // Shortcut imports are allowed to recreate/update a date after deletion.
   // We intentionally do not block them with tombstones.
 
-  if (w || cal || prot || carb || ft || active || resting || bodyFat) {
+  if (w || cal || prot || carb || ft || active || resting || bodyFat || leanMass || workoutType || workoutFlag) {
     const prevLow = getPrevLow();
     const priorBodyFatLow = getPriorBodyFatLow();
     const priorBestDeficit = getPriorBestDeficit();
@@ -4307,9 +4341,11 @@ async function handleURLImport() {
     const entry = mergeEntry(conflict >= 0 ? entries[conflict] : {}, {
       id: d, date: d,
       weight: w, calories: cal, protein: prot, carbs: carb, fat: ft,
-      activeCal: active, restingCal: resting, bodyFat: bodyFat,
+      activeCal: active, restingCal: resting, bodyFat: bodyFat, leanMass: leanMass,
+      workoutType: workoutType, workoutCategory: workoutType ? classifyWorkoutType(workoutType) : '', workoutMinutes: workoutMinutes,
       note: conflict >= 0 ? entries[conflict].note : '',
     });
+    if (workoutType) syncImportedWorkout(d, workoutType, workoutMinutes);
     if (conflict >= 0) entries[conflict] = entry;
     else entries.unshift(entry);
     entries = dedupeEntriesByDate(entries);
