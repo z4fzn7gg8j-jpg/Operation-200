@@ -3176,13 +3176,17 @@ function saveEntry() {
   const activeCal  = document.getElementById('f-active').value.trim();
   const restingCal = document.getElementById('f-resting').value.trim();
   const bodyFat    = document.getElementById('f-bodyfat').value.trim();
+  const leanMass   = document.getElementById('f-leanmass').value.trim();
+  const workoutType = document.getElementById('f-workouttype').value.trim();
+  const workoutMinutes = document.getElementById('f-workoutminutes').value.trim();
+  const workoutCategory = workoutType ? classifyWorkoutType(workoutType) : '';
   const note       = document.getElementById('f-note').value.trim();
   let date         = document.getElementById('date-input').value;
   if (!date) {
     date = today();
     document.getElementById('date-input').value = date;
   }
-  if (!weight && !calories) return;
+  if (![weight,calories,protein,carbs,fat,activeCal,restingCal,bodyFat,leanMass,workoutType,workoutMinutes,note].some(hasValue)) return;
   const prevLow = getPrevLow();
 
   // Snapshot prior bests BEFORE this save, for comparison after
@@ -3195,7 +3199,7 @@ function saveEntry() {
   // day with only the fields currently typed in the form.
   const entry = mergeEntry(existingEntry, {
     id: date, date, weight, calories, protein, carbs, fat,
-    activeCal, restingCal, bodyFat, note,
+    activeCal, restingCal, bodyFat, leanMass, workoutType, workoutCategory, workoutMinutes, note,
   });
   if (editingId !== null && editingId !== date) {
     // Date was changed during edit — drop the old dated record locally and in the cloud
@@ -3378,19 +3382,23 @@ function toggleFormSection(name) {
 // CSV EXPORT — all 13 data fields, one row per entry
 // =============================================================
 function exportCSV() {
-  const headers = ['date','weight','calories','protein','carbs','fat','activecal','restingcal','bodyfat','note'];
+  const headers = ['date','weight','calories','protein','carbs','fat','activecal','restingcal','bodyfat','leanmass','workouttype','workoutcategory','workoutminutes','note'];
+  const esc = v => {
+    const x = v == null ? '' : String(v);
+    return /[",\n]/.test(x) ? '"'+x.replace(/"/g,'""')+'"' : x;
+  };
   const rows = [...entries]
     .sort((a,b)=>new Date(a.date)-new Date(b.date))
     .map(e=>[
-      e.date, e.weight||'', e.calories||'', e.protein||'', e.carbs||'',
-      e.fat||'', e.activeCal||'', e.restingCal||'', e.bodyFat||'',
-      (e.note||'').replace(/"/g,'""'),
-    ].map((v,i)=>i===13?`"${v}"`:v).join(','));
+      e.date,e.weight||'',e.calories||'',e.protein||'',e.carbs||'',e.fat||'',
+      e.activeCal||'',e.restingCal||'',e.bodyFat||'',e.leanMass||'',
+      e.workoutType||'',e.workoutCategory||'',e.workoutMinutes||'',e.note||''
+    ].map(esc).join(','));
   const csv = [headers.join(','), ...rows].join('\n');
   const blob = new Blob([csv], {type:'text/csv'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = 'weightlog_export_'+today()+'.csv';
+  a.href = url; a.download = 'health_log_export_'+today()+'.csv';
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -3412,7 +3420,9 @@ async function importCSV(event) {
     date:['date'], weight:['weight','weightlb','weightkg'], calories:['calories','cal'],
     protein:['protein','prot'], carbs:['carbs','carb','totalcarbs'], fat:['fat','totalfat'],
     activeCal:['activecal','active','activecalories'], restingCal:['restingcal','resting','restingcalories','restingenergy'],
-    bodyFat:['bodyfat','bf','bodyfatpct','bfpct'], note:['note','notes'],
+    bodyFat:['bodyfat','bf','bodyfatpct','bfpct'], leanMass:['leanmass','leanbodymass','lbm'],
+    workoutType:['workouttype','activitytype','workout'], workoutCategory:['workoutcategory','activitycategory'],
+    workoutMinutes:['workoutminutes','duration','minutes'], note:['note','notes'],
   };
   Object.entries(aliases).forEach(([field, names])=>{
     // Exact match first, then startsWith, then contains — handles "Weight (lb)" → "weightlb"
@@ -3447,7 +3457,8 @@ async function importCSV(event) {
       id: dateStr, date: dateStr,
       weight: get('weight'), calories: get('calories'), protein: get('protein'),
       carbs: get('carbs'), fat: get('fat'), activeCal: get('activeCal'),
-      restingCal: get('restingCal'), bodyFat: get('bodyFat'), note: get('note'),
+      restingCal: get('restingCal'), bodyFat: get('bodyFat'), leanMass: get('leanMass'),
+      workoutType: get('workoutType'), workoutCategory: get('workoutCategory'), workoutMinutes: get('workoutMinutes'), note: get('note'),
     };
 
     const conflict = entries.findIndex(e=>e.date===dateStr);
@@ -3495,12 +3506,17 @@ function startEdit(id) {
   document.getElementById('f-active').value = e.activeCal||'';
   document.getElementById('f-resting').value = e.restingCal||'';
   document.getElementById('f-bodyfat').value = e.bodyFat||'';
-    document.getElementById('f-note').value = e.note||'';
+  document.getElementById('f-leanmass').value = e.leanMass||'';
+  document.getElementById('f-workouttype').value = e.workoutType||'';
+  document.getElementById('f-workoutminutes').value = e.workoutMinutes||'';
+  document.getElementById('f-note').value = e.note||'';
   // Show synced indicators and auto-expand sections that have data
   const hasMacros = e.protein || e.carbs || e.fat;
   const hasBurn = e.activeCal || e.restingCal || e.bodyFat;
+  const hasRebuild = e.leanMass || e.workoutType || e.workoutMinutes;
   if (hasMacros) { setFormSection('macros', true); setSynced('macros', true); }
   if (hasBurn) { setFormSection('burn', true); setSynced('burn', true); }
+  if (hasRebuild) { setFormSection('rebuild', true); setSynced('rebuild', true); }
 
   document.getElementById('editing-label').textContent = 'Editing '+fmt(e.date);
   document.getElementById('editing-label').style.display = 'block';
@@ -3516,9 +3532,10 @@ function startEdit(id) {
 function cancelEdit() {
   editingId = null;
   document.getElementById('date-input').value = today();
-  ['f-weight','f-calories','f-protein','f-carbs','f-fat','f-active','f-resting','f-bodyfat'].forEach(id=>document.getElementById(id).value='');
+  ['f-weight','f-calories','f-protein','f-carbs','f-fat','f-active','f-resting','f-bodyfat','f-leanmass','f-workoutminutes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-workouttype').value='';
   document.getElementById('f-note').value = '';
-  ['macros','burn','bio'].forEach(s=>{ setFormSection(s, false); setSynced(s, false); });
+  ['macros','burn','bio','rebuild'].forEach(s=>{ setFormSection(s, false); setSynced(s, false); });
   document.getElementById('editing-label').style.display = 'none';
   document.getElementById('save-btn').textContent = 'Save Day';
   document.getElementById('cancel-btn').style.display = 'none';
@@ -3575,6 +3592,11 @@ function renderHistory() {
           <span class="entry-prot" style="color:${e.activeCal?'#6690c7':'#5a5778'}">${e.activeCal?Math.round(parseFloat(e.activeCal)).toLocaleString()+' active':'— active'}</span>
           <span class="entry-prot" style="color:${e.restingCal?'#7a7490':'#5a5778'}">${e.restingCal?Math.round(parseFloat(e.restingCal)).toLocaleString()+' resting':'— resting'}</span>
           <span class="entry-prot" style="color:${e.bodyFat?'#abdcfa':'#5a5778'}">${e.bodyFat?parseFloat(e.bodyFat).toFixed(1)+'% bf':'— bf'}</span>
+        </div>
+        <div class="entry-vals" style="margin-top:3px;">
+          <span class="entry-prot" style="color:${e.leanMass?'#c9a860':'#5a5778'}">${e.leanMass?parseFloat(e.leanMass).toFixed(1)+' lb lean':'— lean'}</span>
+          <span class="entry-prot" style="color:${e.workoutType?'#78d2a0':'#5a5778'}">${e.workoutType?e.workoutType:'— workout'}</span>
+          <span class="entry-prot" style="color:${e.workoutMinutes?'#78d2a0':'#5a5778'}">${e.workoutMinutes?Math.round(parseFloat(e.workoutMinutes))+' min':'— min'}</span>
         </div>
         ${e.note?`<div class="entry-note">${e.note}</div>`:''}
       </div>
@@ -4666,12 +4688,13 @@ function updatePhaseIconsTheme(currentPhase, isP2, isP3, isP4) {
 // ===== Mission switcher + Operation 20 =====
 const O20_WORK_KEY='operation20_workouts_v1';
 let o20CompVisible=7,o20ProteinVisible=7,o20WorkVisible=7;
-function showMissionGate(){document.body.classList.remove('op20-view');document.body.classList.add('mission-view');document.getElementById('mission-gate').classList.add('active');document.getElementById('op20-shell').style.display='none';document.getElementById('app-wrapper').style.display='none';window.scrollTo(0,0)}
-function openMission200(){document.body.classList.remove('mission-view','op20-view');document.getElementById('mission-gate').classList.remove('active');document.getElementById('op20-shell').style.display='none';const a=document.getElementById('app-wrapper');a.style.display='block';a.style.visibility='visible';updateStats(null);renderHistory();window.scrollTo(0,0)}
-function openMission20(){document.body.classList.remove('mission-view');document.body.classList.add('op20-view');document.getElementById('mission-gate').classList.remove('active');document.getElementById('app-wrapper').style.display='none';document.getElementById('op20-shell').style.display='block';openOp20Panel('op20-home');window.scrollTo(0,0)}
+function showMissionGate(){document.body.classList.remove('op20-view','health-view');document.body.classList.add('mission-view');document.getElementById('mission-gate').classList.add('active');document.getElementById('op20-shell').style.display='none';document.getElementById('app-wrapper').style.display='none';const h=document.getElementById('health-log-shell');if(h)h.style.display='none';window.scrollTo(0,0)}
+function openMission200(){document.body.classList.remove('mission-view','op20-view','health-view');document.getElementById('mission-gate').classList.remove('active');document.getElementById('op20-shell').style.display='none';const h=document.getElementById('health-log-shell');if(h)h.style.display='none';const a=document.getElementById('app-wrapper');a.style.display='block';a.style.visibility='visible';updateStats(null);window.scrollTo(0,0)}
+function openMission20(){document.body.classList.remove('mission-view','health-view');document.body.classList.add('op20-view');document.getElementById('mission-gate').classList.remove('active');document.getElementById('app-wrapper').style.display='none';const h=document.getElementById('health-log-shell');if(h)h.style.display='none';document.getElementById('op20-shell').style.display='block';openOp20Panel('op20-home');window.scrollTo(0,0)}
+function openHealthLog(){document.body.classList.remove('mission-view','op20-view','phase1','phase2','phase3','phase4');document.body.classList.add('health-view');document.getElementById('mission-gate').classList.remove('active');document.getElementById('op20-shell').style.display='none';document.getElementById('app-wrapper').style.display='none';const h=document.getElementById('health-log-shell');if(h)h.style.display='block';switchTab('log');renderHistory();window.scrollTo(0,0)}
 function openOp20Panel(id){document.querySelectorAll('.op20-panel').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');const gt=document.getElementById('op20-global-top');if(gt)gt.classList.toggle('hidden',id!=='op20-home');if(id==='op20-home')o20RenderHome();if(id==='op20-mission')o20RenderMission();if(id==='op20-fuel')o20RenderFuel();if(id==='op20-work')o20RenderWork();window.scrollTo(0,0)}
 function o20Num(v){const n=parseFloat(v);return Number.isFinite(n)?n:null} function o20Fmt(v,d=1){return v==null?'—':Number(v).toFixed(d)}
-function o20Composition(){return (entries||[]).map(e=>{const w=o20Num(e.weight),bf=o20Num(e.bodyFat);if(!e.date||w==null||bf==null)return null;return{date:e.date,weight:w,bf,lean:w*(1-bf/100),fat:w*bf/100}}).filter(Boolean).sort((a,b)=>b.date.localeCompare(a.date))}
+function o20Composition(){return (entries||[]).map(e=>{const w=o20Num(e.weight),bf=o20Num(e.bodyFat),lm=o20Num(e.leanMass);if(!e.date||w==null||bf==null)return null;const lean=lm!=null?lm:w*(1-bf/100);return{date:e.date,weight:w,bf,lean,fat:w*bf/100}}).filter(Boolean).sort((a,b)=>b.date.localeCompare(a.date))}
 function o20Latest(){return o20Composition()[0]||null}
 function o20WeekDates(){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-d.getDay());return Array.from({length:7},(_,i)=>{const x=new Date(d);x.setDate(d.getDate()+i);return x.toISOString().slice(0,10)})}
 function o20Workouts(){try{return JSON.parse(localStorage.getItem(O20_WORK_KEY)||'[]')}catch(e){return[]}}
@@ -4679,7 +4702,7 @@ function o20MilestoneHTML(bf){if(bf==null)return '';const start=Math.max(26,Math
 function o20RenderHome(){const c=o20Latest(),bf=c?o20Num(c.bf):null;document.getElementById('o20-home-bf').textContent=c?o20Fmt(c.bf):'—';document.getElementById('o20-home-weight').textContent=c?o20Fmt(c.weight):'—';document.getElementById('o20-home-bf-rail').innerHTML=o20MilestoneHTML(bf);document.getElementById('o20-bf-note').textContent=c?(c.bf<=20?'Operation 20 reached.':'Next milestone: '+Math.max(20,Math.floor(c.bf))+'%'):'Add weight + body-fat data with your normal Shortcut.';const dates=o20WeekDates(),pm=new Map((entries||[]).filter(e=>o20Num(e.protein)!=null).map(e=>[e.date,o20Num(e.protein)]));let logged=0,hit=0,sum=0;document.getElementById('o20-week').innerHTML=dates.map((d,i)=>{const v=pm.get(d),has=v!=null;if(has){logged++;sum+=v;if(v>=140)hit++}return '<div class="op20-day '+(!has?'':v>=160?'star':v>=140?'hit':'')+'"><b>'+['SUN','MON','TUE','WED','THU','FRI','SAT'][i]+'</b><span>'+(has?Math.round(v)+(v>=160?'★':v>=140?'✓':''):'—')+'</span></div>'}).join('');document.getElementById('o20-fuel-hit').textContent=hit+' / '+logged;document.getElementById('o20-fuel-avg').textContent=logged?'Average on logged days: '+Math.round(sum/logged)+'g':'';const wm=new Map(o20Workouts().map(x=>[x.date,x])),strength=dates.filter(d=>{const x=wm.get(d);return x&&(x.type||'strength')==='strength'}).length;document.getElementById('o20-workweek').innerHTML=dates.map((d,i)=>{const x=wm.get(d),type=x?(x.type||'strength'):'';return '<div class="op20-workday '+type+'"><b>'+['S','M','T','W','T','F','S'][i]+'</b><i>'+(type==='strength'?'✓':type==='other'?'•':'○')+'</i></div>'}).join('');document.getElementById('o20-work-note').textContent=strength>=3?'Week complete ✓':(3-strength)+' strength workout'+(3-strength===1?'':'s')+' remaining'}
 
 function o20ShortDate(s){const p=s.split('-');return Number(p[1])+'/'+Number(p[2])}
-function o20RenderCompositionHistory(){const all=o20Composition(),rows=all.slice(0,o20CompVisible),box=document.getElementById('o20-comp-history'),more=document.getElementById('o20-comp-more');box.innerHTML=rows.length?rows.map(x=>'<div class="op20-hrow compact"><b>'+o20ShortDate(x.date)+'</b><b>'+o20Fmt(x.bf)+'%</b></div>').join(''):'<div class="op20-note">No composition entries yet.</div>';more.style.display=all.length>o20CompVisible?'block':'none'}
+function o20RenderCompositionHistory(){const all=o20Composition(),rows=all.slice(0,o20CompVisible),box=document.getElementById('o20-comp-history'),more=document.getElementById('o20-comp-more');box.innerHTML=rows.length?rows.map(x=>'<div class="op20-hrow compact"><b>'+o20ShortDate(x.date)+'</b><span style="display:flex;align-items:center;gap:8px"><b>'+o20Fmt(x.bf)+'%</b><button class="op20-delete" onclick="o20DeleteComposition(\''+x.date+'\')" aria-label="Delete composition entry">✕</button></span></div>').join(''):'<div class="op20-note">No composition entries yet.</div>';more.style.display=all.length>o20CompVisible?'block':'none'}
 function o20MoreComposition(){o20CompVisible+=7;o20RenderCompositionHistory()}
 function o20ReadLab(){return {w:o20Num(document.getElementById('o20-lab-w').value),l:o20Num(document.getElementById('o20-lab-l').value),f:o20Num(document.getElementById('o20-lab-f').value)}}
 function o20WriteLab(v,skip=[]){['w','l','f'].forEach(k=>{if(v[k]!=null&&!skip.includes(k))document.getElementById('o20-lab-'+k).value=o20Fmt(v[k])})}
@@ -4690,10 +4713,12 @@ function o20RenderMilestones(){const cur=o20Latest(),rail=document.getElementByI
 function o20RenderMission(){const cur=o20Latest();document.getElementById('o20-cur-w').textContent=cur?o20Fmt(cur.weight)+' lb':'—';document.getElementById('o20-cur-bf').textContent=cur?o20Fmt(cur.bf)+'%':'—';document.getElementById('o20-cur-l').textContent=cur?o20Fmt(cur.lean)+' lb':'—';document.getElementById('o20-cur-f').textContent=cur?o20Fmt(cur.fat)+' lb':'—';if(cur&&!document.getElementById('o20-lab-w').value){document.getElementById('o20-lab-w').value=o20Fmt(cur.weight);o20Calculate('w')}o20RenderCompositionHistory()}
 function o20ProteinRows(){return (entries||[]).filter(e=>o20Num(e.protein)!=null).sort((a,b)=>b.date.localeCompare(a.date))}
 function o20ProteinChart(rows){const data=[...rows].slice(0,7).reverse(),el=document.getElementById('o20-p-chart');if(!data.length){el.innerHTML='<div class="op20-note">Protein trend will appear here.</div>';return}const vals=data.map(e=>o20Num(e.protein)),min=Math.min(120,...vals)-5,max=Math.max(170,...vals)+5,w=300,h=115,pad=20,pt=(v,i)=>[(pad+i*(w-pad*2)/Math.max(1,data.length-1)),pad+(max-v)*(h-pad*2)/(max-min)],points=data.map((e,i)=>pt(o20Num(e.protein),i)),gy=pt(160,0)[1],gy140=pt(140,0)[1];el.innerHTML='<svg viewBox="0 0 300 135" preserveAspectRatio="none"><line class="op20-chart-goal" x1="'+pad+'" y1="'+gy+'" x2="'+(w-pad)+'" y2="'+gy+'"></line><text class="op20-chart-label" x="22" y="'+(gy-4)+'">160g</text><line class="op20-chart-goal" x1="'+pad+'" y1="'+gy140+'" x2="'+(w-pad)+'" y2="'+gy140+'" style="opacity:.5"></line><text class="op20-chart-label" x="22" y="'+(gy140-4)+'">140g</text><polyline class="op20-chart-line" points="'+points.map(x=>x.join(',')).join(' ')+'"></polyline>'+points.map((q,i)=>'<circle class="op20-chart-dot" cx="'+q[0]+'" cy="'+q[1]+'" r="3"></circle><text class="op20-chart-value" text-anchor="middle" x="'+q[0]+'" y="'+(q[1]-7)+'">'+Math.round(vals[data.length-1-i])+'</text><text class="op20-chart-label" text-anchor="middle" x="'+q[0]+'" y="130">'+o20ShortDate(data[i].date)+'</text>').join('')+'</svg>'}
-function o20RenderProteinHistory(){const all=o20ProteinRows(),rows=all.slice(0,o20ProteinVisible),more=document.getElementById('o20-p-more');document.getElementById('o20-p-history').innerHTML=rows.map(e=>'<div class="op20-hrow compact"><b>'+o20ShortDate(e.date)+'</b><b class="'+(o20Num(e.protein)>=140?'op20-good':'')+'">'+Math.round(o20Num(e.protein))+'g '+(o20Num(e.protein)>=160?'★':o20Num(e.protein)>=140?'✓':'')+'</b></div>').join('')||'<div class="op20-note">No protein logs yet.</div>';more.style.display=all.length>o20ProteinVisible?'block':'none'}
+function o20RenderProteinHistory(){const all=o20ProteinRows(),rows=all.slice(0,o20ProteinVisible),more=document.getElementById('o20-p-more');document.getElementById('o20-p-history').innerHTML=rows.map(e=>'<div class="op20-hrow compact"><b>'+o20ShortDate(e.date)+'</b><span style="display:flex;align-items:center;gap:8px"><b class="'+(o20Num(e.protein)>=140?'op20-good':'')+'">'+Math.round(o20Num(e.protein))+'g '+(o20Num(e.protein)>=160?'★':o20Num(e.protein)>=140?'✓':'')+'</b><button class="op20-delete" onclick="o20DeleteProtein(\''+e.date+'\')" aria-label="Delete protein entry">✕</button></span></div>').join('')||'<div class="op20-note">No protein logs yet.</div>';more.style.display=all.length>o20ProteinVisible?'block':'none'}
 function o20MoreProtein(){o20ProteinVisible+=7;o20RenderProteinHistory()}
 function o20RenderFuel(){const all=o20ProteinRows(),goal=all.filter(e=>e.date>='2026-10-01');document.getElementById('o20-p-summary').innerHTML='';o20ProteinChart(goal);o20RenderProteinHistory()}
 async function o20SaveProtein(){const d=document.getElementById('o20-p-date').value,v=o20Num(document.getElementById('o20-p-val').value);if(!d||v==null)return;const i=entries.findIndex(e=>e.date===d),entry=mergeEntry(i>=0?entries[i]:{},{date:d,protein:v});if(i>=0)entries[i]=entry;else entries.unshift(entry);entries=dedupeEntriesByDate(entries);persist();await saveEntryToCloud(entry);document.getElementById('o20-p-val').value='';o20RenderFuel()}
+async function o20DeleteProtein(d){const e=entries.find(x=>x.date===d);if(!e)return;e.protein='';persist();await saveEntryToCloud(e);o20RenderFuel();o20RenderHome();renderHistory()}
+async function o20DeleteComposition(d){const e=entries.find(x=>x.date===d);if(!e)return;e.weight='';e.bodyFat='';e.leanMass='';persist();await saveEntryToCloud(e);o20RenderMission();o20RenderHome();renderHistory()}
 function o20WeekKey(d){const x=new Date(d+'T12:00:00');x.setDate(x.getDate()-x.getDay());return x.toISOString().slice(0,10)}
 function o20WorkoutWeeks(w){const m={};w.forEach(x=>{if((x.type||'strength')!=='strength')return;const k=o20WeekKey(x.date);m[k]=(m[k]||0)+1});return Object.entries(m).sort((a,b)=>b[0].localeCompare(a[0]))}
 function o20WorkChart(w){const weeks=o20WorkoutWeeks(w).slice(0,7).reverse(),el=document.getElementById('o20-work-chart');if(!weeks.length){el.innerHTML='<div class="op20-note">Workout trend will appear here.</div>';return}el.innerHTML=weeks.map(([d,n])=>'<div class="op20-weekbar '+(n>=3?'complete':'')+'"><b>'+n+'/3</b><div class="op20-weekbar-fill" style="height:'+Math.min(100,n/3*100)+'%"></div><span>'+o20ShortDate(d)+'</span></div>').join('')}
@@ -4702,6 +4727,18 @@ function o20MoreWork(){o20WorkVisible+=7;o20RenderWorkHistory()}
 function o20RenderWork(){const dates=o20WeekDates(),w=o20Workouts(),m=new Map(w.map(x=>[x.date,x])),n=dates.filter(d=>{const x=m.get(d);return x&&(x.type||'strength')==='strength'}).length;document.getElementById('o20-work-summary').innerHTML='<b>'+n+'/3 strength this week</b> · '+(n>=3?'<span class="op20-good">Week complete ✓</span>':(3-n)+' remaining');o20WorkChart(w);o20RenderWorkHistory()}
 function o20SaveWorkout(){const d=document.getElementById('o20-work-date').value;if(!d)return;let w=o20Workouts().filter(x=>x.date!==d);w.push({date:d,type:document.getElementById('o20-work-type').value,note:document.getElementById('o20-work-note-input').value.trim()});localStorage.setItem(O20_WORK_KEY,JSON.stringify(w));document.getElementById('o20-work-note-input').value='';o20RenderWork();o20RenderHome()}
 function o20DeleteWorkout(d){localStorage.setItem(O20_WORK_KEY,JSON.stringify(o20Workouts().filter(x=>x.date!==d)));o20RenderWork();o20RenderHome()}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter'||e.shiftKey||e.isComposing)return;
+  const el=e.target;
+  if(!el||!el.matches('input,select'))return;
+  const id=el.id;
+  let action=null;
+  if(['o20-lab-w','o20-lab-l','o20-lab-f'].includes(id)) return;
+  if(id==='o20-p-date'||id==='o20-p-val') action=o20SaveProtein;
+  else if(id==='o20-work-date'||id==='o20-work-type'||id==='o20-work-note-input') action=o20SaveWorkout;
+  else if(id&&id.startsWith('f-')||id==='date-input') action=saveEntry;
+  if(action){e.preventDefault();el.blur();action();}
+});
 window.addEventListener('DOMContentLoaded',()=>{const t=today();document.getElementById('o20-p-date').value=t;document.getElementById('o20-work-date').value=t;[['o20-lab-w','w'],['o20-lab-l','l'],['o20-lab-f','f']].forEach(([id,key])=>{const el=document.getElementById(id);let applied='';const apply=()=>{const v=el.value;if(!v||v===applied)return;applied=v;o20Calculate(key)};el.addEventListener('focus',()=>{setTimeout(()=>{const lab=document.getElementById('o20-composition-lab');if(lab)lab.scrollIntoView({behavior:'smooth',block:'start'})},180)});el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();apply();el.blur()}});el.addEventListener('change',apply);el.addEventListener('blur',apply)});showMissionGate()});
 
 
