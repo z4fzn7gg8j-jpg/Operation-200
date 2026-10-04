@@ -18,7 +18,7 @@
 <section id="gate">
  <div class="hero"><div class="eyebrow">Choose your mission</div><h1>Operation</h1><p>Two chapters. One long-term goal: a healthier body you can maintain.</p></div>
  <div class="mission-grid">
-  <button class="choice" id="cutChoice"><div class="eyebrow">The Cut</div><div class="big">200</div><h2>Operation 200</h2><small>Lose the weight. Open the original tracker exactly as it is.</small></button>
+  <button class="choice" id="cutChoice"><div class="eyebrow">The Cut</div><div class="big">200</div><h2>Operation 200</h2><small>Lose the weight. The original cutting dashboard. It reads the same shared health record.</small></button>
   <button class="choice" id="recompChoice"><div class="eyebrow">The Rebuild</div><div class="big">20</div><h2>Operation 20</h2><small>Change what the weight is made of. 20 · 160 · 3.</small></button>
  </div>
 </section>
@@ -94,19 +94,36 @@
 (()=>{
 const LEGACY='https://6a6d26bbbd62e97250abaa35--operation200.netlify.app';
 const $=id=>document.getElementById(id), qsa=s=>[...document.querySelectorAll(s)];
-const PKEY='op20_protein_v1', WKEY='op20_workouts_v1', CKEY='op20_composition_v1';
+const SHARED_KEY='weightlog_v51', WKEY='op20_workouts_v1';
+const SUPABASE_URL='https://itfoyylyusyupuglpder.supabase.co';
+const SUPABASE_KEY='sb_publishable_iPxIPpfl0KYv9ftjaQPC0A_45uIBFRE';
+const SUPABASE_TABLE='entries';
 const read=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}}, write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 const today=()=>{const d=new Date(),o=d.getTimezoneOffset();return new Date(d-o*60000).toISOString().slice(0,10)};
 const num=v=>{const n=parseFloat(v);return Number.isFinite(n)?n:null}, fmt=(v,d=1)=>v==null?'—':Number(v).toFixed(d);
-let protein=read(PKEY), workouts=read(WKEY), comps=read(CKEY), locks=['w','l'];
+let workouts=read(WKEY), locks=['w','l'];
 
-function originalEntries(){try{return JSON.parse(localStorage.getItem('weightlog_v51')||'[]')}catch{return[]}}
-function mergedProtein(){const map=new Map(); originalEntries().forEach(e=>{if(e.date&&num(e.protein)!=null)map.set(e.date,{date:e.date,value:num(e.protein),source:'Operation 200'})}); protein.forEach(e=>map.set(e.date,e)); return [...map.values()].sort((a,b)=>b.date.localeCompare(a.date))}
-function compositionRows(){
- const map=new Map();
- originalEntries().forEach(e=>{const w=num(e.weight),bf=num(e.bodyFat);if(e.date&&w!=null&&bf!=null)map.set(e.date,{date:e.date,weight:w,bf,lean:w*(1-bf/100),fat:w*bf/100})});
- comps.forEach(e=>map.set(e.date,e)); return [...map.values()].sort((a,b)=>b.date.localeCompare(a.date))
+function originalEntries(){try{return JSON.parse(localStorage.getItem(SHARED_KEY)||'[]')}catch{return[]}}
+function hasValue(v){return v!==undefined&&v!==null&&String(v).trim()!==''}
+function mergeShared(existing,incoming){
+ const next={...(existing||{}),id:incoming.date||(existing||{}).date,date:incoming.date||(existing||{}).date};
+ ['weight','calories','protein','carbs','fat','activeCal','restingCal','bodyFat','note'].forEach(k=>{
+   if(hasValue(incoming[k])) next[k]=incoming[k]; else if(next[k]===undefined||next[k]===null) next[k]='';
+ });
+ return next;
 }
+function saveLocalShared(incoming){
+ let rows=originalEntries(),i=rows.findIndex(e=>e.date===incoming.date),entry=mergeShared(i>=0?rows[i]:{},incoming);
+ if(i>=0) rows[i]=entry; else rows.unshift(entry);
+ rows.sort((a,b)=>b.date.localeCompare(a.date)); localStorage.setItem(SHARED_KEY,JSON.stringify(rows)); return entry;
+}
+function toDbEntry(e){return{id:String(e.date),date:e.date,weight:e.weight===''?null:Number(e.weight),calories:e.calories===''?null:Number(e.calories),protein:e.protein===''?null:Number(e.protein),carbs:e.carbs===''?null:Number(e.carbs),fat:e.fat===''?null:Number(e.fat),activecal:e.activeCal===''?null:Number(e.activeCal),restingcal:e.restingCal===''?null:Number(e.restingCal),bodyfat:e.bodyFat===''?null:Number(e.bodyFat),note:e.note||null}}
+function fromDbEntry(r){return{id:String(r.date).slice(0,10),date:String(r.date).slice(0,10),weight:r.weight??'',calories:r.calories??'',protein:r.protein??'',carbs:r.carbs??'',fat:r.fat??'',activeCal:r.activecal??'',restingCal:r.restingcal??'',bodyFat:r.bodyfat??'',note:r.note||''}}
+async function cloud(path,options={}){const res=await fetch(SUPABASE_URL+'/rest/v1/'+path,{...options,cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...(options.headers||{})}});if(!res.ok)throw new Error(await res.text());const t=await res.text();return t?JSON.parse(t):null}
+async function loadSharedCloud(){try{const rows=await cloud(SUPABASE_TABLE+'?select=*&order=date.desc');const local=originalEntries(),map=new Map(local.map(e=>[e.date,e]));(rows||[]).forEach(r=>{const e=fromDbEntry(r);map.set(e.date,mergeShared(map.get(e.date)||{},e))});localStorage.setItem(SHARED_KEY,JSON.stringify([...map.values()].sort((a,b)=>b.date.localeCompare(a.date))))}catch(e){console.warn('Shared cloud load failed',e)}}
+async function saveShared(incoming){const entry=saveLocalShared(incoming);try{await cloud(SUPABASE_TABLE+'?date=eq.'+encodeURIComponent(entry.date),{method:'DELETE'});await cloud(SUPABASE_TABLE,{method:'POST',body:JSON.stringify(toDbEntry(entry))})}catch(e){console.warn('Shared cloud save failed',e)}return entry}
+function mergedProtein(){return originalEntries().filter(e=>e.date&&num(e.protein)!=null).map(e=>({date:e.date,value:num(e.protein),source:'Shared health record'})).sort((a,b)=>b.date.localeCompare(a.date))}
+function compositionRows(){return originalEntries().map(e=>{const w=num(e.weight),bf=num(e.bodyFat);if(!e.date||w==null||bf==null)return null;return{date:e.date,weight:w,bf,lean:w*(1-bf/100),fat:w*bf/100}}).filter(Boolean).sort((a,b)=>b.date.localeCompare(a.date))}
 function sunday(date=new Date()){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-d.getDay());return d}
 function iso(d){return d.toISOString().slice(0,10)}
 function weekDates(){const s=sunday();return Array.from({length:7},(_,i)=>{const d=new Date(s);d.setDate(s.getDate()+i);return iso(d)})}
@@ -126,7 +143,7 @@ function renderMission(){
  const c=latest(); $('curW').textContent=c?fmt(c.weight)+' lb':'—';$('curBF').textContent=c?fmt(c.bf)+'%':'—';$('curLean').textContent=c?fmt(c.lean)+' lb':'—';$('curFat').textContent=c?fmt(c.fat)+' lb':'—';
  if(c && !$('labW').value){$('labW').value=fmt(c.weight);$('labL').value=fmt(c.lean);$('labF').value=fmt(c.fat)}
  solveLab();
- const rows=compositionRows().slice(0,10);$('compHistory').innerHTML=rows.length?rows.map(x=>'<div class="hist"><div><b>'+x.date+'</b><br><small>'+fmt(x.weight)+' lb · '+fmt(x.bf)+'% BF</small></div><div style="text-align:right"><b>'+fmt(x.lean)+' lean</b><br><small>'+fmt(x.fat)+' fat</small></div></div>').join(''):'<div class="notice">No body-composition history yet. Existing Operation 200 weight + body-fat entries will appear automatically.</div>'
+ const rows=compositionRows().slice(0,10);$('compHistory').innerHTML=rows.length?rows.map(x=>'<div class="hist"><div><b>'+x.date+'</b><br><small>'+fmt(x.weight)+' lb · '+fmt(x.bf)+'% BF</small></div><div style="text-align:right"><b>'+fmt(x.lean)+' lean</b><br><small>'+fmt(x.fat)+' fat</small></div></div>').join(''):'<div class="notice">No body-composition history yet. Weight + body-fat entries from the shared Operation record appear automatically.</div>'
 }
 qsa('[data-lock]').forEach(b=>b.onclick=()=>{const k=b.dataset.lock;if(locks.includes(k)){if(locks.length>1)locks=locks.filter(x=>x!==k)}else{locks.push(k);if(locks.length>2)locks.shift()}qsa('[data-lock]').forEach(x=>{const on=locks.includes(x.dataset.lock);x.classList.toggle('on',on);x.textContent=(on?'Use ':'Solve ')+({w:'weight',l:'lean',f:'fat'}[x.dataset.lock])});solveLab()});
 ['labW','labL','labF'].forEach(id=>$(id).addEventListener('input',()=>{if(locks.includes({labW:'w',labL:'l',labF:'f'}[id]))solveLab()}));
@@ -140,18 +157,26 @@ function solveLab(){
  const diff=bf-20;$('goalNote').innerHTML=Math.abs(diff)<.05?'<span class="good">Exactly at Operation 20.</span>':diff<0?'<span class="good">'+fmt(Math.abs(diff))+' points leaner than Operation 20.</span>':fmt(diff)+' percentage points from Operation 20.'
 }
 $('proteinDate').value=today();$('workoutDate').value=today();
-$('saveProtein').onclick=()=>{const date=$('proteinDate').value,v=num($('proteinValue').value);if(!date||v==null||v<0)return;protein=protein.filter(x=>x.date!==date);protein.push({date,value:v});write(PKEY,protein);$('proteinValue').value='';renderFuel()};
-function renderFuel(){const p=mergedProtein(), last=p.slice(0,35), hit=last.filter(x=>x.value>=140).length,stars=last.filter(x=>x.value>=160).length,avg=last.length?last.reduce((s,x)=>s+x.value,0)/last.length:0;$('proteinSummary').innerHTML=last.length?'<b>'+hit+'/'+last.length+'</b> logged days hit 140g · <b>'+stars+'</b> bullseyes · average <b>'+Math.round(avg)+'g</b>':'No protein logs yet.';$('proteinHistory').innerHTML=last.map(x=>'<div class="hist"><div><b>'+x.date+'</b><br><small>'+ (x.source||'Operation 20')+'</small></div><div><b class="'+(x.value>=140?'good':'')+'">'+Math.round(x.value)+'g '+(x.value>=160?'★':x.value>=140?'✓':'')+'</b>'+(x.source? '':' <button data-del-p="'+x.date+'">✕</button>')+'</div></div>').join('');qsa('[data-del-p]').forEach(b=>b.onclick=()=>{protein=protein.filter(x=>x.date!==b.dataset.delP);write(PKEY,protein);renderFuel()})}
+$('saveProtein').onclick=async()=>{const date=$('proteinDate').value,v=num($('proteinValue').value);if(!date||v==null||v<0)return;await saveShared({date,protein:v});$('proteinValue').value='';renderFuel()};
+function renderFuel(){const p=mergedProtein(), last=p.slice(0,35), hit=last.filter(x=>x.value>=140).length,stars=last.filter(x=>x.value>=160).length,avg=last.length?last.reduce((s,x)=>s+x.value,0)/last.length:0;$('proteinSummary').innerHTML=last.length?'<b>'+hit+'/'+last.length+'</b> logged days hit 140g · <b>'+stars+'</b> bullseyes · average <b>'+Math.round(avg)+'g</b>':'No protein logs yet.';$('proteinHistory').innerHTML=last.map(x=>'<div class="hist"><div><b>'+x.date+'</b><br><small>'+ (x.source||'Operation 20')+'</small></div><div><b class="'+(x.value>=140?'good':'')+'">'+Math.round(x.value)+'g '+(x.value>=160?'★':x.value>=140?'✓':'')+'</b>'+'</div></div>').join('')}
 $('saveWorkout').onclick=()=>{const date=$('workoutDate').value;if(!date)return;workouts=workouts.filter(x=>x.date!==date);workouts.push({date,note:$('workoutNote').value.trim()});write(WKEY,workouts);$('workoutNote').value='';renderWork()};
 function renderWork(){const dates=weekDates(),set=new Set(workouts.map(x=>x.date)),n=dates.filter(d=>set.has(d)).length;$('workSummary').innerHTML='<b>'+n+'/3 this week</b> · '+(n>=3?'<span class="good">Week complete ✓</span>:(3-n)+' remaining');$('workHistory').innerHTML=[...workouts].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,40).map(x=>'<div class="hist"><div><b>'+x.date+'</b><br><small>'+(x.note||'Strength workout')+'</small></div><button data-del-w="'+x.date+'">✕</button></div>').join('')||'<div class="notice">No workouts logged yet.</div>';qsa('[data-del-w]').forEach(b=>b.onclick=()=>{workouts=workouts.filter(x=>x.date!==b.dataset.delW);write(WKEY,workouts);renderWork()})}
 
-// Accept the existing Shortcut URL fields plus optional lean/muscle fields for Operation 20.
-// weight + bodyfat automatically create a composition snapshot. lean can override computed lean.
-// muscle is stored for future display/trending but is never treated as lean mass.
-const params=new URLSearchParams(location.search), pw=num(params.get('weight')), pbf=num(params.get('bodyfat')), pl=num(params.get('lean')), pm=num(params.get('muscle')), pd=params.get('date')||today();
-if(pw!=null && (pbf!=null||pl!=null)){const lean=pl!=null?pl:pw*(1-pbf/100),fat=pw-lean,bf=pbf!=null?pbf:fat/pw*100;comps=comps.filter(x=>x.date!==pd);comps.push({date:pd,weight:pw,bf,lean,fat,muscle:pm});write(CKEY,comps)}
-if(params.get('protein')&&num(params.get('protein'))!=null){protein=protein.filter(x=>x.date!==pd);protein.push({date:pd,value:num(params.get('protein'))});write(PKEY,protein)}
-renderHome();
+// One Shortcut import feeds the single shared dated record used by both missions.
+// Operation 200 renders cutting fields (including calories); Operation 20 renders only the fields it needs.
+const params=new URLSearchParams(location.search), clean=x=>x==null?null:x.replace(/,/g,'').trim(), pd=params.get('date')||today();
+const incoming={date:pd};
+const fields={weight:'weight',calories:'calories',protein:'protein',carbs:'carbs',fat:'fat',active:'activeCal',resting:'restingCal',bodyfat:'bodyFat'};
+Object.entries(fields).forEach(([param,key])=>{const raw=clean(params.get(param));if(raw!==null&&raw!=='')incoming[key]=raw});
+async function initShared(){
+ await loadSharedCloud();
+ if(Object.keys(incoming).length>1){
+   await saveShared(incoming);
+   window.history.replaceState({},document.title,window.location.pathname);
+ }
+ renderHome();
+}
+initShared();
 })();
 </script>
 </body></html>
