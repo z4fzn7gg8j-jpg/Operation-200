@@ -19,17 +19,14 @@
   <div class="mg-kicker">Your Journey</div>
   <div class="mg-title">Choose Your Mission</div>
   <div class="mg-sub">One goal. Two chapters.</div>
-  <button class="mg-card cut" onclick="openMission200()">
-    <div class="mg-top"><div class="mg-label">The Cut</div><div class="mg-num">01 · 200</div></div>
-    <div class="mg-name">Operation 200</div><div class="mg-tag">Lose the weight.</div>
-    <div class="mg-desc">Your original journey — phases, progress, milestones, calories, history and achievements.</div>
-    <div class="mg-action"><span>Continue the Cut</span><span>→</span></div>
+  <button class="mg-banner cut" onclick="openMission200()" aria-label="Open Operation 200 — The Cut">
+    <img src="assets/FBD79E8E-2781-498E-95E2-DE342A9F590F.png" alt="Operation 200 — The Cut">
   </button>
-  <button class="mg-card rebuild" onclick="openMission20()">
-    <div class="mg-top"><div class="mg-label">The Rebuild</div><div class="mg-num">02 · 20</div></div>
-    <div class="mg-name">Operation 20</div><div class="mg-tag">Change what the weight is made of.</div>
-    <div class="mg-desc"><b>20%</b> body fat · <b>160g</b> protein · <b>3×</b> strength. Same health record, different mission.</div>
-    <div class="mg-action"><span>Enter the Rebuild</span><span>→</span></div>
+  <button class="mg-banner rebuild" onclick="openMission20()" aria-label="Open Operation 20 — The Rebuild">
+    <img src="assets/E52A6E5E-62CB-4B26-ADF3-A9E521593D11.png" alt="Operation 20 — The Rebuild">
+  </button>
+  <button class="mg-health" onclick="openHealthLog()">
+    <span><b>Health Log</b><small>Log today · History · Import / Export</small></span><span>›</span>
   </button>
 </div>
 
@@ -294,6 +291,12 @@
   <div class="burn-note" id="burn-note">Based on ~2,800 cal/day estimated burn</div>
 </div>
 
+</div><!-- end app-wrapper -->
+
+<div id="health-log-shell">
+  <div class="health-log-top"><button class="op20-back" onclick="showMissionGate()">← Missions</button><div class="health-log-brand">Health Log</div></div>
+  <div class="health-log-title">Shared Health Record</div>
+  <div class="health-log-sub">The data behind Operation 200 and Operation 20.</div>
 <!-- TABS -->
 <div class="tabs">
   <button class="tab active" onclick="switchTab('log')">Log Today</button>
@@ -379,6 +382,34 @@
       </div>
     </div>
 
+    <!-- Shared Operation 20 data -->
+    <div class="form-section-toggle" onclick="toggleFormSection('rebuild')">
+      <span class="form-section-label">Operation 20 Data <span class="form-section-synced" id="rebuild-synced" style="display:none">✓ synced</span></span>
+      <span class="form-section-arrow" id="rebuild-arrow">▾</span>
+    </div>
+    <div class="form-section-body" id="rebuild-body" style="max-height:0;">
+      <div class="field-grid" style="grid-template-columns:1fr 1fr; margin-top:8px; margin-bottom:8px;">
+        <div>
+          <div class="field-label">Lean Mass</div>
+          <input type="number" inputmode="decimal" id="f-leanmass" placeholder="160" class="field-input" enterkeyhint="done">
+        </div>
+        <div>
+          <div class="field-label">Workout Min</div>
+          <input type="number" inputmode="numeric" id="f-workoutminutes" placeholder="45" class="field-input" enterkeyhint="done">
+        </div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div class="field-label">Workout Type</div>
+        <select id="f-workouttype" class="field-input health-select">
+          <option value="">None</option>
+          <option value="Traditional Strength Training">Traditional Strength Training</option>
+          <option value="Functional Strength Training">Functional Strength Training</option>
+          <option value="Strength Training">Strength Training</option>
+          <option value="Other Activity">Other Activity</option>
+        </select>
+      </div>
+    </div>
+
     <!-- Note -->
     <div class="note-wrap" style="margin-top:8px;">
       <div class="field-label" style="text-align:left; margin-bottom:8px; color:#b4abbf;">Note</div>
@@ -408,7 +439,9 @@
   </div>
 </div>
 
-</div><!-- end app-wrapper -->
+
+</div>
+
 <script src="assets/js/app.js"></script>
 </body>
 </html>
