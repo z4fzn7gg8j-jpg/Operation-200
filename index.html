@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090914"><title>Operation 200 / Operation 20</title>
+<style>
+:root{--bg:#090914;--card:#121224;--card2:#18182e;--line:#2b2b4a;--text:#f3f1fb;--muted:#9793ae;--gold:#e6c36a;--violet:#8f7cf5;--green:#77d6a3;--red:#ef8b8b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -20%,#242047 0,#0d0d1c 34%,var(--bg) 70%);color:var(--text);font-family:Arial,sans-serif;min-height:100vh}button,input{font:inherit}button{cursor:pointer}.wrap{max-width:720px;margin:auto;padding:22px 16px 60px}.serif{font-family:Georgia,serif}.eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:800}.muted{color:var(--muted)}.hidden{display:none!important}
+.hero{text-align:center;padding:32px 8px 22px}.hero h1{font:700 42px/1 Georgia,serif;margin:8px 0}.hero p{color:var(--muted);margin:8px 0}.mission-grid{display:grid;gap:14px}.choice,.card{background:linear-gradient(145deg,rgba(24,24,46,.96),rgba(15,15,31,.98));border:1px solid var(--line);border-radius:22px;padding:20px;color:var(--text)}.choice{text-align:left;width:100%}.choice h2{font:700 27px Georgia,serif;margin:7px 0}.choice .big{font-size:40px;font-weight:900;color:var(--gold)}.choice:hover{border-color:#555087}.choice small{color:var(--muted);font-size:13px}.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.back{border:1px solid var(--line);background:#111122;color:var(--muted);border-radius:12px;padding:9px 12px}.identity{text-align:center;margin:12px 0 24px}.identity .nums{font:700 44px Georgia,serif;letter-spacing:.04em}.identity .nums span{color:var(--gold)}.identity p{margin:8px 0;color:var(--muted);font-size:13px}
+.pillar{width:100%;text-align:left;margin-bottom:13px}.pillar-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.pillar-title{font-size:12px;letter-spacing:.18em;color:var(--gold);font-weight:900}.metric{font:700 38px Georgia,serif;margin:7px 0 3px}.metric small{font:600 15px Arial;color:var(--muted)}.chev{color:var(--muted);font-size:22px}.bar{height:8px;border-radius:99px;background:#27273f;overflow:hidden;margin:14px 0 8px}.fill{height:100%;background:linear-gradient(90deg,var(--violet),var(--gold));border-radius:99px}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.dots{display:flex;gap:10px;margin:13px 0}.dot{width:38px;height:38px;border:1px solid #484762;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#77738e}.dot.done{background:#234334;border-color:#4e9b70;color:#baf0cf}.weekstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:12px}.day{text-align:center;padding:8px 2px;border-radius:10px;background:#0e0e1c;border:1px solid #24243b;min-width:0}.day b{display:block;font-size:10px;color:var(--muted)}.day span{display:block;font-size:12px;margin-top:5px}.day.hit{border-color:#416e56}.day.star{border-color:#806f38}.day.blank span{color:#56536b}
+.panel{margin-top:10px}.panel h2{font:700 30px Georgia,serif;margin:6px 0 5px}.section{margin:14px 0}.statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.stat{background:#0e0e1d;border:1px solid #25253e;border-radius:14px;padding:13px}.stat label{display:block;color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase}.stat strong{display:block;font:700 22px Georgia;margin-top:5px}.lab{border:1px solid #3a3858;background:#101020;border-radius:18px;padding:16px;margin-top:14px}.lab h3{font:700 21px Georgia;margin:4px 0 5px}.field{margin:12px 0}.field label{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-bottom:6px}.field input{width:100%;background:#090914;border:1px solid #343451;border-radius:12px;color:var(--text);padding:13px;font-size:18px}.seg{display:flex;gap:6px;margin-top:8px}.seg button{flex:1;border:1px solid #343451;background:#101020;color:var(--muted);padding:9px;border-radius:10px}.seg button.on{border-color:var(--gold);color:var(--gold)}.result{border-top:1px solid #2c2b43;margin-top:14px;padding-top:14px}.result .bf{font:700 36px Georgia;color:var(--gold)}.delta{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.delta div{background:#0a0a16;border-radius:10px;padding:9px;text-align:center;font-size:11px;color:var(--muted)}.delta b{display:block;color:var(--text);font-size:15px;margin-bottom:3px}.goalnote{margin-top:10px;font-size:12px;color:var(--muted)}.good{color:var(--green)!important}.warn{color:var(--gold)!important}
+.logbox{display:flex;gap:8px;margin:12px 0}.logbox input{flex:1;min-width:0;background:#090914;border:1px solid #343451;border-radius:12px;color:var(--text);padding:12px;font-size:16px}.primary{border:0;background:var(--gold);color:#17120a;border-radius:12px;padding:12px 15px;font-weight:900}.secondary{border:1px solid #3b3956;background:#111121;color:var(--text);border-radius:12px;padding:11px 13px}.history{display:grid;gap:7px;margin-top:12px}.hist{display:flex;justify-content:space-between;align-items:center;background:#0d0d1b;border:1px solid #23233a;border-radius:12px;padding:10px 12px}.hist small{color:var(--muted)}.hist button{border:0;background:transparent;color:#706d85;padding:5px}.notice{font-size:12px;color:var(--muted);line-height:1.5;background:#0c0c19;border-radius:12px;padding:11px;margin-top:10px}.legacy{display:block;text-align:center;text-decoration:none;background:var(--gold);color:#18120a;padding:14px;border-radius:14px;font-weight:900;margin-top:16px}
+@media(min-width:620px){.mission-grid{grid-template-columns:1fr 1fr}.statgrid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section id="gate">
+ <div class="hero"><div class="eyebrow">Choose your mission</div><h1>Operation</h1><p>Two chapters. One long-term goal: a healthier body you can maintain.</p></div>
+ <div class="mission-grid">
+  <button class="choice" id="cutChoice"><div class="eyebrow">The Cut</div><div class="big">200</div><h2>Operation 200</h2><small>Lose the weight. Open the original tracker exactly as it is.</small></button>
+  <button class="choice" id="recompChoice"><div class="eyebrow">The Rebuild</div><div class="big">20</div><h2>Operation 20</h2><small>Change what the weight is made of. 20 · 160 · 3.</small></button>
+ </div>
+</section>
+
+<section id="op20" class="hidden">
+ <div class="topbar"><button class="back" data-home>← Missions</button><div class="eyebrow">The Rebuild</div></div>
+ <div class="identity"><div class="nums"><span>20</span> · 160 · 3</div><p>20% body fat · 160g protein · 3 workouts/week</p></div>
+
+ <button class="card pillar" data-open="mission">
+  <div class="pillar-head"><div><div class="pillar-title">MISSION — 20%</div><div class="metric"><span id="homeBF">—</span><small>% BODY FAT</small></div></div><div class="chev">›</div></div>
+  <div class="bar"><div id="bfFill" class="fill" style="width:0"></div></div>
+  <div class="row"><span class="muted"><span id="homeWeight">—</span> lb current weight</span><b id="bfRemaining">Add composition data</b></div>
+ </button>
+
+ <button class="card pillar" data-open="fuel">
+  <div class="pillar-head"><div><div class="pillar-title">FUEL — 160g</div><div class="metric"><span id="fuelHit">0 / 0</span><small> LOGGED DAYS ≥140</small></div></div><div class="chev">›</div></div>
+  <div id="proteinWeek" class="weekstrip"></div>
+  <div class="row" style="margin-top:10px"><span class="muted">This week</span><b id="fuelAvg">No logs yet</b></div>
+ </button>
+
+ <button class="card pillar" data-open="work">
+  <div class="pillar-head"><div><div class="pillar-title">WORK — 3×</div><div class="dots"><div class="dot" id="w1">○</div><div class="dot" id="w2">○</div><div class="dot" id="w3">○</div></div></div><div class="chev">›</div></div>
+  <div class="row"><span class="muted">Sunday – Saturday</span><b id="workRemain">3 workouts remaining</b></div>
+ </button>
+</section>
+
+<section id="mission" class="panel hidden">
+ <div class="topbar"><button class="back" data-back>← Operation 20</button><div class="eyebrow">Mission</div></div>
+ <h2>Body Composition</h2><p class="muted">Your latest actual measurements, plus a sandbox for understanding what the scale could mean.</p>
+ <div class="card section">
+  <div class="eyebrow">Current</div>
+  <div class="statgrid">
+   <div class="stat"><label>Weight</label><strong id="curW">—</strong></div>
+   <div class="stat"><label>Body Fat</label><strong id="curBF">—</strong></div>
+   <div class="stat"><label>Lean Mass</label><strong id="curLean">—</strong></div>
+   <div class="stat"><label>Fat Mass</label><strong id="curFat">—</strong></div>
+  </div>
+  <div class="notice">Muscle mass can be tracked separately when your Shortcut sends it, but the composition math uses lean body mass. Lean mass is not the same thing as muscle mass.</div>
+ </div>
+ <div class="lab">
+  <div class="eyebrow">Composition Lab</div><h3>Build a scenario</h3><p class="muted">Choose any two values. The third is solved automatically. Body-fat % is an output; 20% is only the mission marker.</p>
+  <div class="field"><label><span>Weight</span><span>lb</span></label><input id="labW" type="number" step=".1" inputmode="decimal"><div class="seg"><button data-lock="w" class="on">Use weight</button></div></div>
+  <div class="field"><label><span>Lean body mass</span><span>lb</span></label><input id="labL" type="number" step=".1" inputmode="decimal"><div class="seg"><button data-lock="l" class="on">Use lean</button></div></div>
+  <div class="field"><label><span>Fat mass</span><span>lb</span></label><input id="labF" type="number" step=".1" inputmode="decimal"><div class="seg"><button data-lock="f">Solve fat</button></div></div>
+  <div class="result"><div class="eyebrow">Your scenario</div><div class="bf"><span id="labBF">—</span>% body fat</div>
+   <div class="delta"><div><b id="dW">—</b>scale</div><div><b id="dL">—</b>lean</div><div><b id="dF">—</b>fat</div></div>
+   <div class="goalnote" id="goalNote"></div>
+  </div>
+  <div class="notice">Tap two “Use” buttons to decide what you control; the remaining field becomes the answer. This is arithmetic, not a prediction. Scale-derived lean mass can move with hydration.</div>
+ </div>
+ <div class="card section"><div class="eyebrow">Recent composition</div><div id="compHistory" class="history"></div></div>
+</section>
+
+<section id="fuel" class="panel hidden">
+ <div class="topbar"><button class="back" data-back>← Operation 20</button><div class="eyebrow">Fuel</div></div>
+ <h2>Protein History</h2><p class="muted">140g is a successful day. 160g is the bullseye. Unlogged days stay blank — they are not failures.</p>
+ <div class="card">
+  <div class="logbox"><input id="proteinDate" type="date"><input id="proteinValue" type="number" inputmode="numeric" placeholder="Protein g"><button class="primary" id="saveProtein">Save</button></div>
+  <div id="proteinSummary" class="notice"></div><div id="proteinHistory" class="history"></div>
+ </div>
+</section>
+
+<section id="work" class="panel hidden">
+ <div class="topbar"><button class="back" data-back>← Operation 20</button><div class="eyebrow">Work</div></div>
+ <h2>Workout History</h2><p class="muted">The goal is consistency, not a complicated lifting log. Three strength workouts makes the week complete.</p>
+ <div class="card">
+  <div class="logbox"><input id="workoutDate" type="date"><input id="workoutNote" placeholder="Optional note"><button class="primary" id="saveWorkout">Log</button></div>
+  <div id="workSummary" class="notice"></div><div id="workHistory" class="history"></div>
+ </div>
+</section>
+</div>
+<script>
+(()=>{
+const LEGACY='https://6a6d26bbbd62e97250abaa35--operation200.netlify.app';
+const $=id=>document.getElementById(id), qsa=s=>[...document.querySelectorAll(s)];
+const PKEY='op20_protein_v1', WKEY='op20_workouts_v1', CKEY='op20_composition_v1';
+const read=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}}, write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const today=()=>{const d=new Date(),o=d.getTimezoneOffset();return new Date(d-o*60000).toISOString().slice(0,10)};
+const num=v=>{const n=parseFloat(v);return Number.isFinite(n)?n:null}, fmt=(v,d=1)=>v==null?'—':Number(v).toFixed(d);
+let protein=read(PKEY), workouts=read(WKEY), comps=read(CKEY), locks=['w','l'];
+
+function originalEntries(){try{return JSON.parse(localStorage.getItem('weightlog_v51')||'[]')}catch{return[]}}
+function mergedProtein(){const map=new Map(); originalEntries().forEach(e=>{if(e.date&&num(e.protein)!=null)map.set(e.date,{date:e.date,value:num(e.protein),source:'Operation 200'})}); protein.forEach(e=>map.set(e.date,e)); return [...map.values()].sort((a,b)=>b.date.localeCompare(a.date))}
+function compositionRows(){
+ const map=new Map();
+ originalEntries().forEach(e=>{const w=num(e.weight),bf=num(e.bodyFat);if(e.date&&w!=null&&bf!=null)map.set(e.date,{date:e.date,weight:w,bf,lean:w*(1-bf/100),fat:w*bf/100})});
+ comps.forEach(e=>map.set(e.date,e)); return [...map.values()].sort((a,b)=>b.date.localeCompare(a.date))
+}
+function sunday(date=new Date()){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-d.getDay());return d}
+function iso(d){return d.toISOString().slice(0,10)}
+function weekDates(){const s=sunday();return Array.from({length:7},(_,i)=>{const d=new Date(s);d.setDate(s.getDate()+i);return iso(d)})}
+function show(id){['gate','op20','mission','fuel','work'].forEach(x=>$(x).classList.toggle('hidden',x!==id)); if(id==='op20')renderHome(); if(id==='mission')renderMission(); if(id==='fuel')renderFuel(); if(id==='work')renderWork()}
+$('cutChoice').addEventListener('click',()=>location.href=LEGACY); $('recompChoice').addEventListener('click',()=>show('op20')); qsa('[data-home]').forEach(b=>b.onclick=()=>show('gate'));qsa('[data-back]').forEach(b=>b.onclick=()=>show('op20'));qsa('[data-open]').forEach(b=>b.onclick=()=>show(b.dataset.open));
+
+function latest(){return compositionRows()[0]||null}
+function renderHome(){
+ const c=latest(); $('homeBF').textContent=c?fmt(c.bf):'—';$('homeWeight').textContent=c?fmt(c.weight):'—';
+ if(c){const rem=c.bf-20;$('bfRemaining').textContent=rem<=0?'Mission reached':fmt(rem)+' points to 20%';$('bfFill').style.width=Math.max(0,Math.min(100,(35-c.bf)/15*100))+'%'}else{$('bfRemaining').textContent='Add composition data';$('bfFill').style.width='0'}
+ const p=mergedProtein(), dates=weekDates(), m=new Map(p.map(x=>[x.date,x.value])); let logged=0,hit=0,sum=0;
+ $('proteinWeek').innerHTML=dates.map((d,i)=>{const v=m.get(d),has=v!=null;if(has){logged++;sum+=v;if(v>=140)hit++}return '<div class="day '+(!has?'blank':v>=160?'star':v>=140?'hit':'')+'"><b>'+['SUN','MON','TUE','WED','THU','FRI','SAT'][i]+'</b><span>'+(has?Math.round(v)+(v>=160?'★':v>=140?'✓':''):'—')+'</span></div>'}).join('');
+ $('fuelHit').textContent=hit+' / '+logged;$('fuelAvg').textContent=logged?'Avg '+Math.round(sum/logged)+'g':'No logs yet';
+ const set=new Set(workouts.map(x=>x.date)), count=dates.filter(d=>set.has(d)).length;[1,2,3].forEach((n,i)=>{const e=$('w'+n);e.classList.toggle('done',i<count);e.textContent=i<count?'✓':'○'});$('workRemain').textContent=count>=3?'Week complete ✓':(3-count)+' workout'+(3-count===1?'':'s')+' remaining'
+}
+function renderMission(){
+ const c=latest(); $('curW').textContent=c?fmt(c.weight)+' lb':'—';$('curBF').textContent=c?fmt(c.bf)+'%':'—';$('curLean').textContent=c?fmt(c.lean)+' lb':'—';$('curFat').textContent=c?fmt(c.fat)+' lb':'—';
+ if(c && !$('labW').value){$('labW').value=fmt(c.weight);$('labL').value=fmt(c.lean);$('labF').value=fmt(c.fat)}
+ solveLab();
+ const rows=compositionRows().slice(0,10);$('compHistory').innerHTML=rows.length?rows.map(x=>'<div class="hist"><div><b>'+x.date+'</b><br><small>'+fmt(x.weight)+' lb · '+fmt(x.bf)+'% BF</small></div><div style="text-align:right"><b>'+fmt(x.lean)+' lean</b><br><small>'+fmt(x.fat)+' fat</small></div></div>').join(''):'<div class="notice">No body-composition history yet. Existing Operation 200 weight + body-fat entries will appear automatically.</div>'
+}
+qsa('[data-lock]').forEach(b=>b.onclick=()=>{const k=b.dataset.lock;if(locks.includes(k)){if(locks.length>1)locks=locks.filter(x=>x!==k)}else{locks.push(k);if(locks.length>2)locks.shift()}qsa('[data-lock]').forEach(x=>{const on=locks.includes(x.dataset.lock);x.classList.toggle('on',on);x.textContent=(on?'Use ':'Solve ')+({w:'weight',l:'lean',f:'fat'}[x.dataset.lock])});solveLab()});
+['labW','labL','labF'].forEach(id=>$(id).addEventListener('input',()=>{if(locks.includes({labW:'w',labL:'l',labF:'f'}[id]))solveLab()}));
+function solveLab(){
+ let w=num($('labW').value),l=num($('labL').value),f=num($('labF').value);
+ if(locks.includes('w')&&locks.includes('l')&&w!=null&&l!=null){f=w-l;$('labF').value=fmt(f)}
+ else if(locks.includes('w')&&locks.includes('f')&&w!=null&&f!=null){l=w-f;$('labL').value=fmt(l)}
+ else if(locks.includes('l')&&locks.includes('f')&&l!=null&&f!=null){w=l+f;$('labW').value=fmt(w)}
+ w=num($('labW').value);l=num($('labL').value);f=num($('labF').value);if(w==null||l==null||f==null||w<=0||l<0||f<0){$('labBF').textContent='—';return}
+ const bf=f/w*100;$('labBF').textContent=fmt(bf);const c=latest();const delta=(v,b)=>c?(v-b>=0?'+':'')+fmt(v-b):'—';$('dW').textContent=delta(w,c?.weight);$('dL').textContent=delta(l,c?.lean);$('dF').textContent=delta(f,c?.fat);
+ const diff=bf-20;$('goalNote').innerHTML=Math.abs(diff)<.05?'<span class="good">Exactly at Operation 20.</span>':diff<0?'<span class="good">'+fmt(Math.abs(diff))+' points leaner than Operation 20.</span>':fmt(diff)+' percentage points from Operation 20.'
+}
+$('proteinDate').value=today();$('workoutDate').value=today();
+$('saveProtein').onclick=()=>{const date=$('proteinDate').value,v=num($('proteinValue').value);if(!date||v==null||v<0)return;protein=protein.filter(x=>x.date!==date);protein.push({date,value:v});write(PKEY,protein);$('proteinValue').value='';renderFuel()};
+function renderFuel(){const p=mergedProtein(), last=p.slice(0,35), hit=last.filter(x=>x.value>=140).length,stars=last.filter(x=>x.value>=160).length,avg=last.length?last.reduce((s,x)=>s+x.value,0)/last.length:0;$('proteinSummary').innerHTML=last.length?'<b>'+hit+'/'+last.length+'</b> logged days hit 140g · <b>'+stars+'</b> bullseyes · average <b>'+Math.round(avg)+'g</b>':'No protein logs yet.';$('proteinHistory').innerHTML=last.map(x=>'<div class="hist"><div><b>'+x.date+'</b><br><small>'+ (x.source||'Operation 20')+'</small></div><div><b class="'+(x.value>=140?'good':'')+'">'+Math.round(x.value)+'g '+(x.value>=160?'★':x.value>=140?'✓':'')+'</b>'+(x.source? '':' <button data-del-p="'+x.date+'">✕</button>')+'</div></div>').join('');qsa('[data-del-p]').forEach(b=>b.onclick=()=>{protein=protein.filter(x=>x.date!==b.dataset.delP);write(PKEY,protein);renderFuel()})}
+$('saveWorkout').onclick=()=>{const date=$('workoutDate').value;if(!date)return;workouts=workouts.filter(x=>x.date!==date);workouts.push({date,note:$('workoutNote').value.trim()});write(WKEY,workouts);$('workoutNote').value='';renderWork()};
+function renderWork(){const dates=weekDates(),set=new Set(workouts.map(x=>x.date)),n=dates.filter(d=>set.has(d)).length;$('workSummary').innerHTML='<b>'+n+'/3 this week</b> · '+(n>=3?'<span class="good">Week complete ✓</span>:(3-n)+' remaining');$('workHistory').innerHTML=[...workouts].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,40).map(x=>'<div class="hist"><div><b>'+x.date+'</b><br><small>'+(x.note||'Strength workout')+'</small></div><button data-del-w="'+x.date+'">✕</button></div>').join('')||'<div class="notice">No workouts logged yet.</div>';qsa('[data-del-w]').forEach(b=>b.onclick=()=>{workouts=workouts.filter(x=>x.date!==b.dataset.delW);write(WKEY,workouts);renderWork()})}
+
+// Accept the existing Shortcut URL fields plus optional lean/muscle fields for Operation 20.
+// weight + bodyfat automatically create a composition snapshot. lean can override computed lean.
+// muscle is stored for future display/trending but is never treated as lean mass.
+const params=new URLSearchParams(location.search), pw=num(params.get('weight')), pbf=num(params.get('bodyfat')), pl=num(params.get('lean')), pm=num(params.get('muscle')), pd=params.get('date')||today();
+if(pw!=null && (pbf!=null||pl!=null)){const lean=pl!=null?pl:pw*(1-pbf/100),fat=pw-lean,bf=pbf!=null?pbf:fat/pw*100;comps=comps.filter(x=>x.date!==pd);comps.push({date:pd,weight:pw,bf,lean,fat,muscle:pm});write(CKEY,comps)}
+if(params.get('protein')&&num(params.get('protein'))!=null){protein=protein.filter(x=>x.date!==pd);protein.push({date:pd,value:num(params.get('protein'))});write(PKEY,protein)}
+renderHome();
+})();
+</script>
+</body></html>
