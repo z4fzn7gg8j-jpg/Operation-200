@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 440" role="img" aria-label="Operation 20 - 20 160 3">
+<defs>
+ <linearGradient id="bg" x1="0" x2="1"><stop stop-color="#06182d"/><stop offset=".5" stop-color="#0a3155"/><stop offset="1" stop-color="#06182d"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#43c8ff" stop-opacity=".20"/><stop offset="1" stop-color="#43c8ff" stop-opacity="0"/></radialGradient>
+ <filter id="g"><feGaussianBlur stdDeviation="10"/></filter>
+</defs>
+<rect width="1200" height="440" rx="38" fill="url(#bg)"/>
+<ellipse cx="600" cy="220" rx="390" ry="190" fill="url(#glow)" filter="url(#g)"/>
+<g opacity=".13" stroke="#69d1ff" stroke-width="2">
+ <path d="M0 90H1200M0 350H1200"/><path d="M160 0L60 440M1040 0L1140 440"/>
+</g>
+<!-- bar -->
+<rect x="170" y="207" width="860" height="26" rx="13" fill="#d9e8f1"/>
+<rect x="170" y="214" width="860" height="5" fill="#6fcfff" opacity=".7"/>
+<!-- left plates -->
+<g fill="#0b4169" stroke="#69d1ff" stroke-width="5">
+ <rect x="118" y="132" width="54" height="176" rx="13"/><rect x="70" y="153" width="42" height="134" rx="10"/>
+ <rect x="1028" y="132" width="54" height="176" rx="13"/><rect x="1088" y="153" width="42" height="134" rx="10"/>
+</g>
+<g fill="#06182d" stroke="#9ae2ff" stroke-width="3">
+ <rect x="151" y="184" width="30" height="72" rx="8"/><rect x="1019" y="184" width="30" height="72" rx="8"/>
+</g>
+<!-- goal plates -->
+<g font-family="Georgia,serif" font-weight="700" fill="#f5fbff" text-anchor="middle">
+ <text x="310" y="247" font-size="98">20</text>
+ <text x="600" y="257" font-size="128">160</text>
+ <text x="890" y="247" font-size="98">3</text>
+</g>
+<g fill="#69d1ff"><circle cx="445" cy="220" r="8"/><circle cx="755" cy="220" r="8"/></g>
+<!-- small energetic accents -->
+<g fill="#69d1ff" opacity=".75"><path d="M225 88h150l-20 12H205z"/><path d="M825 340h150l20 12H845z"/></g>
+</svg>
