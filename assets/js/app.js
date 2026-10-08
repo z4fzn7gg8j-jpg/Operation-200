@@ -63,6 +63,10 @@ function toDbEntry(e) {
     activecal: e.activeCal === '' ? null : Number(e.activeCal),
     restingcal: e.restingCal === '' ? null : Number(e.restingCal),
     bodyfat: e.bodyFat === '' ? null : Number(e.bodyFat),
+    steps: e.steps === '' || e.steps == null ? null : Number(e.steps),
+    rhr: e.rhr === '' || e.rhr == null ? null : Number(e.rhr),
+    hrv: e.hrv === '' || e.hrv == null ? null : Number(e.hrv),
+    sleep: e.sleep === '' || e.sleep == null ? null : Number(e.sleep),
     leanmass: e.leanMass === '' || e.leanMass == null ? null : Number(e.leanMass),
     workouttype: e.workoutType || null,
     workoutcategory: e.workoutCategory || null,
@@ -83,6 +87,10 @@ function fromDbEntry(r) {
     activeCal: r.activecal ?? '',
     restingCal: r.restingcal ?? '',
     bodyFat: r.bodyfat ?? '',
+    steps: r.steps ?? '',
+    rhr: r.rhr ?? '',
+    hrv: r.hrv ?? '',
+    sleep: r.sleep ?? '',
     leanMass: r.leanmass ?? '',
     workoutType: r.workouttype || '',
     workoutCategory: r.workoutcategory || '',
@@ -98,7 +106,7 @@ function hasValue(v) {
 function mergeEntry(existing, incoming) {
   const base = existing || {};
   const next = { ...base, id: incoming.date || base.date, date: incoming.date || base.date };
-  ['weight','calories','protein','carbs','fat','activeCal','restingCal','bodyFat','leanMass','workoutType','workoutCategory','workoutMinutes','note'].forEach(key => {
+  ['weight','calories','protein','carbs','fat','activeCal','restingCal','bodyFat','steps','rhr','hrv','sleep','leanMass','workoutType','workoutCategory','workoutMinutes','note'].forEach(key => {
     if (hasValue(incoming[key])) next[key] = incoming[key];
     else if (next[key] === undefined || next[key] === null) next[key] = '';
   });
@@ -713,7 +721,7 @@ function computeRecords(entries) {
   // --- Macro Balance (kept from the original version — not in the badge doc, but useful) ---
   const withCarb = asc.filter(e=>e.carbs);
   const withFat = asc.filter(e=>e.fat);
-  const avgProteinDay = withProt.length ? (()=>{ const avg=Math.round(withProt.reduce((s,e)=>s+parseFloat(e.protein),0)/withProt.length); return {val:avg+'g',sub:Math.round((avg/150)*100)+'% of 150g goal'}; })() : dash;
+  const avgProteinDay = withProt.length ? (()=>{ const avg=Math.round(withProt.reduce((s,e)=>s+parseFloat(e.protein),0)/withProt.length); return {val:avg+'g',sub:Math.round((avg/140)*100)+'% of 140g goal'}; })() : dash;
   const avgCarbDay = withCarb.length ? (()=>{ const avg=Math.round(withCarb.reduce((s,e)=>s+parseFloat(e.carbs),0)/withCarb.length); return {val:avg+'g',sub:(avg>=100&&avg<=250)?'in 100\u2013250g range':'Goal: 100\u2013250g'}; })() : dash;
   const avgFatDay = withFat.length ? (()=>{ const avg=Math.round(withFat.reduce((s,e)=>s+parseFloat(e.fat),0)/withFat.length); return {val:avg+'g',sub:(avg>=60&&avg<=80)?'in 60\u201380g range':'Goal: 60\u201380g'}; })() : dash;
   const highestCarbDay = withCarb.length ? (()=>{ const s=[...withCarb].sort((a,b)=>parseFloat(b.carbs)-parseFloat(a.carbs)); return {val:s[0].carbs+'g',sub:fmt(s[0].date)}; })() : dash;
@@ -863,14 +871,14 @@ function getMilestoneBadgeDefs() {
     { key:'bronze_physique', category:'Body Fat', icon:'🐾', name:'Body Fat Under 34%', desc:'Body fat at or below 34%.', repeatable:true, compute: asc=>ach_crossingEvents(asc,'bodyFat',34,'down') },
     { key:'silver_physique', category:'Body Fat', icon:'🌲', name:'Body Fat Under 30%', desc:'Body fat at or below 30%.', repeatable:true, compute: asc=>ach_crossingEvents(asc,'bodyFat',30,'down') },
     { key:'gold_physique', category:'Body Fat', icon:'👣', name:'Body Fat Under 25%', desc:'Body fat at or below 25%.', repeatable:true, compute: asc=>ach_crossingEvents(asc,'bodyFat',25,'down') },
-    ...[100,125,150].map(g => ({
+    ...[100,120,140].map(g => ({
       key:'first_'+g+'g_day', category:'Protein', icon:'🥩', name:'Logged '+g+'g Protein',
       desc:'Logged '+g+'g or more protein in one day.', repeatable:false,
       compute: asc => { const ev = ach_dailyEvents(asc,'protein',v=>v>=g); return ev.length?[ev[0]]:[]; }
     })),
     { key:'protein_warrior_ms', category:'Protein', icon:'⚔️', name:'100g Protein Week', desc:'Averaged 100g or more protein for a full week.', repeatable:true, granularity:'week', compute: asc=>ach_periodicThresholdEvents(ach_groupByWeek(asc),'protein',100,'up') },
-    { key:'protein_machine_ms', category:'Protein', icon:'🛡️', name:'125g Protein Week', desc:'Averaged 125g or more protein for a full week.', repeatable:true, granularity:'week', compute: asc=>ach_periodicThresholdEvents(ach_groupByWeek(asc),'protein',125,'up') },
-    { key:'protein_terminator', category:'Protein', icon:'💚', name:'150g Protein Week', desc:'Averaged 150g or more protein for a full week.', repeatable:true, granularity:'week', compute: asc=>ach_periodicThresholdEvents(ach_groupByWeek(asc),'protein',150,'up') },
+    { key:'protein_machine_ms', category:'Protein', icon:'🛡️', name:'120g Protein Week', desc:'Averaged 120g or more protein for a full week.', repeatable:true, granularity:'week', compute: asc=>ach_periodicThresholdEvents(ach_groupByWeek(asc),'protein',120,'up') },
+    { key:'protein_terminator', category:'Protein', icon:'💚', name:'140g Protein Week', desc:'Averaged 140g or more protein for a full week.', repeatable:true, granularity:'week', compute: asc=>ach_periodicThresholdEvents(ach_groupByWeek(asc),'protein',140,'up') },
     { key:'built_different', category:'Protein', icon:'🦍', name:'30 Days of 100g Protein', desc:'Averaged 100g or more protein for 30 straight days.', repeatable:true, granularity:'range', compute: asc=>ach_consecutiveAvgStreakEvents(asc,'protein',30,100,'up') },
     { key:'first_log', category:'Logging', icon:'📝', name:'First Day Logged', desc:'Logged the first day of the journey.', repeatable:false, compute: asc=>asc.length?[{date:asc[0].date,value:1}]:[] },
     { key:'30_days_logged', category:'Logging', icon:'🚓', name:'30 Days Logged', desc:'Logged 30 total days.', repeatable:false, compute: asc=>{const ev=ach_cumulativeCountEvent(asc,30); return ev?[ev]:[];} },
@@ -890,8 +898,8 @@ function getMilestoneBadgeDefs() {
       compute: asc=>{const ev=ach_cumulativeCountEvent(asc,days); return ev?[ev]:[];}
     })),
     { key:'complete_week', category:'Logging', icon:'✅', name:'Full Week Logged', desc:'Logged all seven days of an Operation 200 week.', repeatable:true, granularity:'week', compute: asc=>ach_groupByWeek(asc).filter(g=>g.entries.length>=7).map(g=>({date:g.entries[g.entries.length-1].date,value:g.wk})) },
-    { key:'protein_7_day_streak', category:'Protein', icon:'🥩', name:'7-Day Protein Streak', desc:'Logged 100g or more protein for seven straight days.', repeatable:true, granularity:'range', compute: asc=>ach_consecutiveDailyThresholdEvents(asc,'protein',7,100) },
-    { key:'protein_14_day_streak', category:'Protein', icon:'🦾', name:'14-Day Protein Streak', desc:'Logged 100g or more protein for fourteen straight days.', repeatable:true, granularity:'range', compute: asc=>ach_consecutiveDailyThresholdEvents(asc,'protein',14,100) },
+    { key:'protein_7_day_streak', category:'Protein', icon:'🥩', name:'7-Day Protein Streak', desc:'Logged 120g or more protein for seven straight days.', repeatable:true, granularity:'range', compute: asc=>ach_consecutiveDailyThresholdEvents(asc,'protein',7,120) },
+    { key:'protein_14_day_streak', category:'Protein', icon:'🦾', name:'14-Day Protein Streak', desc:'Logged 120g or more protein for fourteen straight days.', repeatable:true, granularity:'range', compute: asc=>ach_consecutiveDailyThresholdEvents(asc,'protein',14,120) },
     { key:'calorie_goal_week', category:'Calories', icon:'🔒', name:'Calorie Goal Week', desc:'Averaged at or below the calorie goal for a full Operation 200 week.', repeatable:true, granularity:'week', compute: asc=>ach_periodicThresholdEvents(ach_groupByWeek(asc).filter(g=>g.entries.length>=5),'calories',CAL_GOAL,'down') },
     { key:'deficit_week_500', category:'Calories', icon:'🚨', name:'500-Calorie Deficit Week', desc:'Averaged a daily deficit of at least 500 calories for an Operation 200 week.', repeatable:true, granularity:'week', compute: asc=>ach_groupByWeek(asc).filter(g=>g.entries.filter(e=>e.calories).length>=5).filter(g=>{const vals=g.entries.filter(e=>e.calories).map(e=>getDailyBurn(e)-parseFloat(e.calories)); return vals.reduce((a,b)=>a+b,0)/vals.length>=500;}).map(g=>({date:g.entries[g.entries.length-1].date,value:g.wk})) },
 
@@ -987,7 +995,7 @@ function resolveBadges(defs, entries) {
 // award the looser 1,800 and 2,000 badges.
 function collapseTieredBadgeUnlocks(badges) {
   const families = [
-    ['first_150g_day','first_125g_day','first_100g_day'],
+    ['first_140g_day','first_120g_day','first_100g_day'],
     ['protein_terminator','protein_machine_ms','protein_warrior_ms'],
     ['bf_under_35','bf_under_36','bf_under_37','bf_under_38','bf_under_39'],
   ];
@@ -1371,9 +1379,9 @@ function getPersonalizedGreeting(streak, cur) {
     }
   }
 
-  // Protein consistency — days in last 7 hitting >= 150g
+  // Protein consistency — days in last 7 hitting >= 120g (successful-day target)
   const last7prot = withProt.slice(0, 7);
-  const protStreak = last7prot.filter(e => parseFloat(e.protein) >= 150).length;
+  const protStreak = last7prot.filter(e => parseFloat(e.protein) >= 120).length;
 
   // Best protein day ever
   const bestProtDay = withProt.reduce((best, e) => parseFloat(e.protein) > parseFloat(best?.protein||0) ? e : best, null);
@@ -1413,10 +1421,10 @@ function getPersonalizedGreeting(streak, cur) {
   // ── YESTERDAY ──
   if (yDef !== null && yProt !== null) {
     const defStr = yDef > 0 ? yDef.toLocaleString()+' cal deficit' : Math.abs(yDef).toLocaleString()+' cal surplus';
-    if (yDef > 700 && yProt >= 160) opts.push({ text: 'Yesterday was elite — '+defStr+' and '+yProt+'g protein. That is the blueprint.', sub: streak >= 3 ? streak+'-day streak and counting.' : 'Do it again today.' });
-    else if (yDef > 0 && yProt >= 150) opts.push({ text: 'Solid day yesterday — '+defStr+' with '+yProt+'g protein locked in.', sub: streak >= 3 ? streak+' days straight.' : 'Keep the momentum.' });
-    else if (yDef > 0 && yProt >= 130) opts.push({ text: 'Yesterday: '+defStr+', '+yProt+'g protein. Body had what it needed.', sub: streak >= 3 ? streak+'-day streak holding.' : 'Keep it going.' });
-    else if (yDef > 0 && yProt < 110) opts.push({ text: 'Good deficit yesterday ('+defStr+') but protein was light at '+yProt+'g.', sub: 'Prioritize protein today — muscle protection matters more in a cut.' });
+    if (yDef > 700 && yProt >= 140) opts.push({ text: 'Yesterday was elite — '+defStr+' and '+yProt+'g protein. That is the blueprint.', sub: streak >= 3 ? streak+'-day streak and counting.' : 'Do it again today.' });
+    else if (yDef > 0 && yProt >= 120) opts.push({ text: 'Solid day yesterday — '+defStr+' with '+yProt+'g protein locked in.', sub: streak >= 3 ? streak+' days straight.' : 'Keep the momentum.' });
+    else if (yDef > 0 && yProt >= 100) opts.push({ text: 'Yesterday: '+defStr+', '+yProt+'g protein. Body had what it needed.', sub: streak >= 3 ? streak+'-day streak holding.' : 'Keep it going.' });
+    else if (yDef > 0 && yProt < 100) opts.push({ text: 'Good deficit yesterday ('+defStr+') but protein was light at '+yProt+'g.', sub: 'Prioritize protein today — muscle protection matters more in a cut.' });
     else if (yDef > 500) opts.push({ text: 'Strong deficit yesterday — '+defStr+'. The scale will catch up.', sub: pacePerWeek ? 'Running about '+pacePerWeek+' lb/week right now.' : '' });
     else if (yDef <= 0) opts.push({ text: 'Yesterday was a surplus. One day does not derail a journey — what you do today does.', sub: streak >= 1 ? 'Streak is '+streak+'. Do not let one day become two.' : 'Reset and go.' });
     else if (yDef > 0) opts.push({ text: 'Yesterday: '+defStr+'. Every deficit day pushes the number down.', sub: '' });
@@ -1506,8 +1514,8 @@ function getPersonalizedGreeting(streak, cur) {
   if (bestWeekDrop && bestWeekDrop >= 2) opts.push({ text: 'Your best 7-day drop ever was '+bestWeekDrop+' lb. That is what peak focus looks like.', sub: 'You have done it before — you can do it again.' });
 
   // ── PROTEIN CONSISTENCY ──
-  if (protStreak >= 6) opts.push({ text: protStreak+' of the last 7 days hitting 150g+ protein. That muscle is being protected.', sub: 'High protein in a deficit is what preserves the good weight.' });
-  else if (protStreak >= 4) opts.push({ text: protStreak+' out of 7 days at 150g+ protein lately. Good — keep pushing that number up.', sub: '' });
+  if (protStreak >= 6) opts.push({ text: protStreak+' of the last 7 days hitting 120g+ protein. That muscle is being protected.', sub: 'High protein in a deficit is what preserves the good weight.' });
+  else if (protStreak >= 4) opts.push({ text: protStreak+' out of 7 days at 120g+ protein lately. Good — keep pushing that number up.', sub: '' });
   if (bestProtDay) opts.push({ text: 'Your protein record is '+parseFloat(bestProtDay.protein)+'g. That is what a serious cut looks like.', sub: 'Chase that number today.' });
 
   // ── TOTAL DAYS LOGGED ──
@@ -1642,7 +1650,7 @@ function getPersonalizedGreeting(streak, cur) {
   // TODAY / YESTERDAY SNAPSHOTS
   if (todayDef !== null) addBanner('daily-today-1','daily','TODAY’S ENERGY BALANCE: '+Math.abs(todayDef).toLocaleString()+' CAL '+(todayDef>=0?'DEFICIT':'SURPLUS')+'.','This is one live data point inside a '+totalDaysLogged+'-day record.');
   if (yDef !== null) addBanner('daily-yesterday-1','daily','YESTERDAY CLOSED '+Math.abs(yDef).toLocaleString()+' CAL '+(yDef>=0?'UNDER BURN':'OVER BURN')+'.',yProt !== null ? 'Protein logged: '+Math.round(yProt)+' g.' : 'Current journey total: '+fmt1(lbsLost)+' lb down.');
-  if (yProt !== null) addBanner('daily-yesterday-protein-1','daily','YESTERDAY’S PROTEIN: '+Math.round(yProt)+' G.','Recent 150 g+ frequency: '+protStreak+' of the last 7 protein-logged days.');
+  if (yProt !== null) addBanner('daily-yesterday-protein-1','daily','YESTERDAY’S PROTEIN: '+Math.round(yProt)+' G.','Recent 120 g+ frequency: '+protStreak+' of the last 7 protein-logged days.');
 
   // Keep only messages whose numbers resolve cleanly.
   const cleanBanner = banner.filter(m => !/NaN|undefined|null/.test(m.text+' '+m.sub));
@@ -3882,6 +3890,10 @@ function showFreshLogBanner(entry, recentBadges, celebration) {
   if (entry.activeCal) parts.push(Math.round(parseFloat(entry.activeCal)).toLocaleString()+' active');
   if (entry.restingCal) parts.push(Math.round(parseFloat(entry.restingCal)).toLocaleString()+' resting');
   if (entry.bodyFat) parts.push(entry.bodyFat+'% bf');
+  if (entry.steps) parts.push(Math.round(parseFloat(entry.steps)).toLocaleString()+' steps');
+  if (entry.rhr) parts.push(Math.round(parseFloat(entry.rhr))+' rhr');
+  if (entry.hrv) parts.push(parseFloat(entry.hrv).toFixed(1)+' hrv');
+  if (entry.sleep) parts.push(parseFloat(entry.sleep).toFixed(1)+'h sleep');
 
   const summaryEl = document.getElementById('freshlog-banner-summary');
   if (summaryEl) summaryEl.textContent = fmtExactDate(entry.date) + (parts.length ? ' \u2014 '+parts.join(' \u00b7 ') : '');
@@ -4297,6 +4309,10 @@ function showSyncBanner(entry) {
   if (entry.activeCal) parts.push(Math.round(parseFloat(entry.activeCal)).toLocaleString()+' active');
   if (entry.restingCal) parts.push(Math.round(parseFloat(entry.restingCal)).toLocaleString()+' resting');
   if (entry.bodyFat) parts.push(entry.bodyFat+'% bf');
+  if (entry.steps) parts.push(Math.round(parseFloat(entry.steps)).toLocaleString()+' steps');
+  if (entry.rhr) parts.push(Math.round(parseFloat(entry.rhr))+' rhr');
+  if (entry.hrv) parts.push(parseFloat(entry.hrv).toFixed(1)+' hrv');
+  if (entry.sleep) parts.push(parseFloat(entry.sleep).toFixed(1)+'h sleep');
 
   // Keep the existing ✕ button from the HTML, just update the text node before it
   banner.style.display = 'block';
@@ -4346,6 +4362,10 @@ async function handleURLImport() {
   const active = cleanNum(params.get('active'));
   const resting = cleanNum(params.get('resting'));
   const bodyFat = cleanNum(params.get('bodyfat'));
+  const steps = cleanNum(params.get('steps'));
+  const rhr = cleanNum(params.get('rhr'));
+  const hrv = cleanNum(params.get('hrv'));
+  const sleep = cleanNum(params.get('sleep'));
   const leanMass = cleanNum(params.get('lean'));
   const workoutType = (params.get('workouttype') || '').trim();
   const workoutMinutes = cleanNum(params.get('workoutminutes') || params.get('duration'));
@@ -4355,7 +4375,7 @@ async function handleURLImport() {
   // Shortcut imports are allowed to recreate/update a date after deletion.
   // We intentionally do not block them with tombstones.
 
-  if (w || cal || prot || carb || ft || active || resting || bodyFat || leanMass || workoutType || workoutFlag) {
+  if (w || cal || prot || carb || ft || active || resting || bodyFat || steps || rhr || hrv || sleep || leanMass || workoutType || workoutFlag) {
     const prevLow = getPrevLow();
     const priorBodyFatLow = getPriorBodyFatLow();
     const priorBestDeficit = getPriorBestDeficit();
@@ -4363,7 +4383,7 @@ async function handleURLImport() {
     const entry = mergeEntry(conflict >= 0 ? entries[conflict] : {}, {
       id: d, date: d,
       weight: w, calories: cal, protein: prot, carbs: carb, fat: ft,
-      activeCal: active, restingCal: resting, bodyFat: bodyFat, leanMass: leanMass,
+      activeCal: active, restingCal: resting, bodyFat: bodyFat, steps: steps, rhr: rhr, hrv: hrv, sleep: sleep, leanMass: leanMass,
       workoutType: workoutType, workoutCategory: workoutType ? classifyWorkoutType(workoutType) : '', workoutMinutes: workoutMinutes,
       note: conflict >= 0 ? entries[conflict].note : '',
     });
@@ -4699,7 +4719,7 @@ function o20Latest(){return o20Composition()[0]||null}
 function o20WeekDates(){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-d.getDay());return Array.from({length:7},(_,i)=>{const x=new Date(d);x.setDate(d.getDate()+i);return x.toISOString().slice(0,10)})}
 function o20Workouts(){try{return JSON.parse(localStorage.getItem(O20_WORK_KEY)||'[]')}catch(e){return[]}}
 function o20MilestoneHTML(bf){if(bf==null)return '';const start=Math.max(26,Math.ceil(bf)),levels=[];for(let p=start;p>=20;p--)levels.push(p);return levels.map(p=>{const done=bf<=p,goal=p===20,current=!done&&p===Math.floor(bf);return '<div class="op20-bf-step '+(done?'done ':'')+(current?'current ':'')+(goal?'goal':'')+'"><div class="op20-bf-dot"></div>'+p+'%</div>'}).join('')}
-function o20RenderHome(){const c=o20Latest(),bf=c?o20Num(c.bf):null;document.getElementById('o20-home-bf').textContent=c?o20Fmt(c.bf):'—';document.getElementById('o20-home-weight').textContent=c?o20Fmt(c.weight):'—';document.getElementById('o20-home-bf-rail').innerHTML=o20MilestoneHTML(bf);document.getElementById('o20-bf-note').textContent=c?(c.bf<=20?'Operation 20 reached.':'Next milestone: '+Math.max(20,Math.floor(c.bf))+'%'):'Add weight + body-fat data with your normal Shortcut.';const dates=o20WeekDates(),pm=new Map((entries||[]).filter(e=>o20Num(e.protein)!=null).map(e=>[e.date,o20Num(e.protein)]));let logged=0,hit=0,sum=0;document.getElementById('o20-week').innerHTML=dates.map((d,i)=>{const v=pm.get(d),has=v!=null;if(has){logged++;sum+=v;if(v>=140)hit++}return '<div class="op20-day '+(!has?'':v>=160?'star':v>=140?'hit':'')+'"><b>'+['SUN','MON','TUE','WED','THU','FRI','SAT'][i]+'</b><span>'+(has?Math.round(v)+(v>=160?'★':v>=140?'✓':''):'—')+'</span></div>'}).join('');document.getElementById('o20-fuel-hit').textContent=hit+' / '+logged;document.getElementById('o20-fuel-avg').textContent=logged?'Average on logged days: '+Math.round(sum/logged)+'g':'';const wm=new Map(o20Workouts().map(x=>[x.date,x])),strength=dates.filter(d=>{const x=wm.get(d);return x&&(x.type||'strength')==='strength'}).length;document.getElementById('o20-workweek').innerHTML=dates.map((d,i)=>{const x=wm.get(d),type=x?(x.type||'strength'):'';return '<div class="op20-workday '+type+'"><b>'+['S','M','T','W','T','F','S'][i]+'</b><i>'+(type==='strength'?'✓':type==='other'?'•':'○')+'</i></div>'}).join('');document.getElementById('o20-work-note').textContent=strength>=3?'Week complete ✓':(3-strength)+' strength workout'+(3-strength===1?'':'s')+' remaining'}
+function o20RenderHome(){const c=o20Latest(),bf=c?o20Num(c.bf):null;document.getElementById('o20-home-bf').textContent=c?o20Fmt(c.bf):'—';document.getElementById('o20-home-weight').textContent=c?o20Fmt(c.weight):'—';document.getElementById('o20-home-bf-rail').innerHTML=o20MilestoneHTML(bf);document.getElementById('o20-bf-note').textContent=c?(c.bf<=20?'Operation 20 reached.':'Next milestone: '+Math.max(20,Math.floor(c.bf))+'%'):'Add weight + body-fat data with your normal Shortcut.';const dates=o20WeekDates(),pm=new Map((entries||[]).filter(e=>o20Num(e.protein)!=null).map(e=>[e.date,o20Num(e.protein)]));let logged=0,hit=0,sum=0;document.getElementById('o20-week').innerHTML=dates.map((d,i)=>{const v=pm.get(d),has=v!=null;if(has){logged++;sum+=v;if(v>=140)hit++}return '<div class="op20-day '+(!has?'':v>=140?'star':v>=120?'hit':'')+'"><b>'+['SUN','MON','TUE','WED','THU','FRI','SAT'][i]+'</b><span>'+(has?Math.round(v)+(v>=140?'★':v>=120?'✓':''):'—')+'</span></div>'}).join('');document.getElementById('o20-fuel-hit').textContent=hit+' / '+logged;document.getElementById('o20-fuel-avg').textContent=logged?'Average on logged days: '+Math.round(sum/logged)+'g':'';const wm=new Map(o20Workouts().map(x=>[x.date,x])),strength=dates.filter(d=>{const x=wm.get(d);return x&&(x.type||'strength')==='strength'}).length;document.getElementById('o20-workweek').innerHTML=dates.map((d,i)=>{const x=wm.get(d),type=x?(x.type||'strength'):'';return '<div class="op20-workday '+type+'"><b>'+['S','M','T','W','T','F','S'][i]+'</b><i>'+(type==='strength'?'✓':type==='other'?'•':'○')+'</i></div>'}).join('');document.getElementById('o20-work-note').textContent=strength>=3?'Week complete ✓':(3-strength)+' strength workout'+(3-strength===1?'':'s')+' remaining'}
 
 function o20ShortDate(s){const p=s.split('-');return Number(p[1])+'/'+Number(p[2])}
 function o20RenderCompositionHistory(){const all=o20Composition(),rows=all.slice(0,o20CompVisible),box=document.getElementById('o20-comp-history'),more=document.getElementById('o20-comp-more');box.innerHTML=rows.length?rows.map(x=>'<div class="op20-hrow compact"><b>'+o20ShortDate(x.date)+'</b><span style="display:flex;align-items:center;gap:8px"><b>'+o20Fmt(x.bf)+'%</b><button class="op20-delete" onclick="o20DeleteComposition(\''+x.date+'\')" aria-label="Delete composition entry">✕</button></span></div>').join(''):'<div class="op20-note">No composition entries yet.</div>';more.style.display=all.length>o20CompVisible?'block':'none'}
@@ -4712,8 +4732,8 @@ function o20RenderMilestones(){const cur=o20Latest(),rail=document.getElementByI
 
 function o20RenderMission(){const cur=o20Latest();document.getElementById('o20-cur-w').textContent=cur?o20Fmt(cur.weight)+' lb':'—';document.getElementById('o20-cur-bf').textContent=cur?o20Fmt(cur.bf)+'%':'—';document.getElementById('o20-cur-l').textContent=cur?o20Fmt(cur.lean)+' lb':'—';document.getElementById('o20-cur-f').textContent=cur?o20Fmt(cur.fat)+' lb':'—';if(cur&&!document.getElementById('o20-lab-w').value){document.getElementById('o20-lab-w').value=o20Fmt(cur.weight);o20Calculate('w')}o20RenderCompositionHistory()}
 function o20ProteinRows(){return (entries||[]).filter(e=>o20Num(e.protein)!=null).sort((a,b)=>b.date.localeCompare(a.date))}
-function o20ProteinChart(rows){const data=[...rows].slice(0,7).reverse(),el=document.getElementById('o20-p-chart');if(!data.length){el.innerHTML='<div class="op20-note">Protein trend will appear here.</div>';return}const vals=data.map(e=>o20Num(e.protein)),min=Math.min(120,...vals)-5,max=Math.max(170,...vals)+5,w=300,h=115,pad=20,pt=(v,i)=>[(pad+i*(w-pad*2)/Math.max(1,data.length-1)),pad+(max-v)*(h-pad*2)/(max-min)],points=data.map((e,i)=>pt(o20Num(e.protein),i)),gy=pt(160,0)[1],gy140=pt(140,0)[1];el.innerHTML='<svg viewBox="0 0 300 135" preserveAspectRatio="none"><line class="op20-chart-goal" x1="'+pad+'" y1="'+gy+'" x2="'+(w-pad)+'" y2="'+gy+'"></line><text class="op20-chart-label" x="22" y="'+(gy-4)+'">160g</text><line class="op20-chart-goal" x1="'+pad+'" y1="'+gy140+'" x2="'+(w-pad)+'" y2="'+gy140+'" style="opacity:.5"></line><text class="op20-chart-label" x="22" y="'+(gy140-4)+'">140g</text><polyline class="op20-chart-line" points="'+points.map(x=>x.join(',')).join(' ')+'"></polyline>'+points.map((q,i)=>'<circle class="op20-chart-dot" cx="'+q[0]+'" cy="'+q[1]+'" r="3"></circle><text class="op20-chart-value" text-anchor="middle" x="'+q[0]+'" y="'+(q[1]-7)+'">'+Math.round(vals[data.length-1-i])+'</text><text class="op20-chart-label" text-anchor="middle" x="'+q[0]+'" y="130">'+o20ShortDate(data[i].date)+'</text>').join('')+'</svg>'}
-function o20RenderProteinHistory(){const all=o20ProteinRows(),rows=all.slice(0,o20ProteinVisible),more=document.getElementById('o20-p-more');document.getElementById('o20-p-history').innerHTML=rows.map(e=>'<div class="op20-hrow compact"><b>'+o20ShortDate(e.date)+'</b><span style="display:flex;align-items:center;gap:8px"><b class="'+(o20Num(e.protein)>=140?'op20-good':'')+'">'+Math.round(o20Num(e.protein))+'g '+(o20Num(e.protein)>=160?'★':o20Num(e.protein)>=140?'✓':'')+'</b><button class="op20-delete" onclick="o20DeleteProtein(\''+e.date+'\')" aria-label="Delete protein entry">✕</button></span></div>').join('')||'<div class="op20-note">No protein logs yet.</div>';more.style.display=all.length>o20ProteinVisible?'block':'none'}
+function o20ProteinChart(rows){const data=[...rows].slice(0,7).reverse(),el=document.getElementById('o20-p-chart');if(!data.length){el.innerHTML='<div class="op20-note">Protein trend will appear here.</div>';return}const vals=data.map(e=>o20Num(e.protein)),min=Math.min(100,...vals)-5,max=Math.max(150,...vals)+5,w=300,h=115,pad=20,pt=(v,i)=>[(pad+i*(w-pad*2)/Math.max(1,data.length-1)),pad+(max-v)*(h-pad*2)/(max-min)],points=data.map((e,i)=>pt(o20Num(e.protein),i)),gy=pt(140,0)[1],gy120=pt(120,0)[1];el.innerHTML='<svg viewBox="0 0 300 135" preserveAspectRatio="none"><line class="op20-chart-goal" x1="'+pad+'" y1="'+gy+'" x2="'+(w-pad)+'" y2="'+gy+'"></line><text class="op20-chart-label" x="22" y="'+(gy-4)+'">160g</text><line class="op20-chart-goal" x1="'+pad+'" y1="'+gy140+'" x2="'+(w-pad)+'" y2="'+gy140+'" style="opacity:.5"></line><text class="op20-chart-label" x="22" y="'+(gy140-4)+'">140g</text><polyline class="op20-chart-line" points="'+points.map(x=>x.join(',')).join(' ')+'"></polyline>'+points.map((q,i)=>'<circle class="op20-chart-dot" cx="'+q[0]+'" cy="'+q[1]+'" r="3"></circle><text class="op20-chart-value" text-anchor="middle" x="'+q[0]+'" y="'+(q[1]-7)+'">'+Math.round(vals[data.length-1-i])+'</text><text class="op20-chart-label" text-anchor="middle" x="'+q[0]+'" y="130">'+o20ShortDate(data[i].date)+'</text>').join('')+'</svg>'}
+function o20RenderProteinHistory(){const all=o20ProteinRows(),rows=all.slice(0,o20ProteinVisible),more=document.getElementById('o20-p-more');document.getElementById('o20-p-history').innerHTML=rows.map(e=>'<div class="op20-hrow compact"><b>'+o20ShortDate(e.date)+'</b><span style="display:flex;align-items:center;gap:8px"><b class="'+(o20Num(e.protein)>=120?'op20-good':'')+'">'+Math.round(o20Num(e.protein))+'g '+(o20Num(e.protein)>=140?'★':o20Num(e.protein)>=120?'✓':'')+'</b><button class="op20-delete" onclick="o20DeleteProtein(\''+e.date+'\')" aria-label="Delete protein entry">✕</button></span></div>').join('')||'<div class="op20-note">No protein logs yet.</div>';more.style.display=all.length>o20ProteinVisible?'block':'none'}
 function o20MoreProtein(){o20ProteinVisible+=7;o20RenderProteinHistory()}
 function o20RenderFuel(){const all=o20ProteinRows(),goal=all.filter(e=>e.date>='2026-10-01');document.getElementById('o20-p-summary').innerHTML='';o20ProteinChart(goal);o20RenderProteinHistory()}
 async function o20SaveProtein(){const d=document.getElementById('o20-p-date').value,v=o20Num(document.getElementById('o20-p-val').value);if(!d||v==null)return;const i=entries.findIndex(e=>e.date===d),entry=mergeEntry(i>=0?entries[i]:{},{date:d,protein:v});if(i>=0)entries[i]=entry;else entries.unshift(entry);entries=dedupeEntriesByDate(entries);persist();await saveEntryToCloud(entry);document.getElementById('o20-p-val').value='';o20RenderFuel()}
