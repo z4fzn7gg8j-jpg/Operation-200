@@ -1,0 +1,84 @@
+name: Apply Oct 8 Operation 200 updates
+on:
+  push:
+    paths:
+      - '.github/workflows/oct8-operation200-update.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply requested updates
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          app = Path('assets/js/app.js')
+          s = app.read_text()
+
+          # Health fields sent by the overnight Shortcut.
+          s = s.replace("    bodyfat: e.bodyFat === '' ? null : Number(e.bodyFat),\n    leanmass:", "    bodyfat: e.bodyFat === '' ? null : Number(e.bodyFat),\n    steps: e.steps === '' || e.steps == null ? null : Number(e.steps),\n    rhr: e.rhr === '' || e.rhr == null ? null : Number(e.rhr),\n    hrv: e.hrv === '' || e.hrv == null ? null : Number(e.hrv),\n    sleep: e.sleep === '' || e.sleep == null ? null : Number(e.sleep),\n    leanmass:")
+          s = s.replace("    bodyFat: r.bodyfat ?? '',\n    leanMass:", "    bodyFat: r.bodyfat ?? '',\n    steps: r.steps ?? '',\n    rhr: r.rhr ?? '',\n    hrv: r.hrv ?? '',\n    sleep: r.sleep ?? '',\n    leanMass:")
+          s = s.replace("'activeCal','restingCal','bodyFat','leanMass'", "'activeCal','restingCal','bodyFat','steps','rhr','hrv','sleep','leanMass'")
+
+          # 140g target / 120g successful-day framework.
+          s = s.replace("Math.round((avg/150)*100)+'% of 150g goal'", "Math.round((avg/140)*100)+'% of 140g goal'")
+          s = s.replace("...[100,125,150].map(g => ({", "...[100,120,140].map(g => ({")
+          s = s.replace("name:'125g Protein Week', desc:'Averaged 125g or more protein for a full week.'", "name:'120g Protein Week', desc:'Averaged 120g or more protein for a full week.'")
+          s = s.replace("'protein',125,'up'", "'protein',120,'up'")
+          s = s.replace("name:'150g Protein Week', desc:'Averaged 150g or more protein for a full week.'", "name:'140g Protein Week', desc:'Averaged 140g or more protein for a full week.'")
+          s = s.replace("'protein',150,'up'", "'protein',140,'up'")
+          s = s.replace("Logged 100g or more protein for seven straight days.", "Logged 120g or more protein for seven straight days.")
+          s = s.replace("ach_consecutiveDailyThresholdEvents(asc,'protein',7,100)", "ach_consecutiveDailyThresholdEvents(asc,'protein',7,120)")
+          s = s.replace("Logged 100g or more protein for fourteen straight days.", "Logged 120g or more protein for fourteen straight days.")
+          s = s.replace("ach_consecutiveDailyThresholdEvents(asc,'protein',14,100)", "ach_consecutiveDailyThresholdEvents(asc,'protein',14,120)")
+          s = s.replace("['first_150g_day','first_125g_day','first_100g_day']", "['first_140g_day','first_120g_day','first_100g_day']")
+          s = s.replace("// Protein consistency — days in last 7 hitting >= 150g", "// Protein consistency — days in last 7 hitting >= 120g (successful-day target)")
+          s = s.replace("parseFloat(e.protein) >= 150", "parseFloat(e.protein) >= 120")
+          s = s.replace("yDef > 700 && yProt >= 160", "yDef > 700 && yProt >= 140")
+          s = s.replace("yDef > 0 && yProt >= 150", "yDef > 0 && yProt >= 120")
+          s = s.replace("yDef > 0 && yProt >= 130", "yDef > 0 && yProt >= 100")
+          s = s.replace("yDef > 0 && yProt < 110", "yDef > 0 && yProt < 100")
+          s = s.replace("150g+ protein", "120g+ protein")
+          s = s.replace("150 g+ protein", "120 g+ protein")
+          s = s.replace("150 g+ frequency", "120 g+ frequency")
+          s = s.replace("at 150g+ protein", "at 120g+ protein")
+
+          # Operation 20 fuel UI logic.
+          s = s.replace("v>=160?'star':v>=140?'hit':'", "v>=140?'star':v>=120?'hit':'")
+          s = s.replace("v>=160?'★':v>=140?'✓':'", "v>=140?'★':v>=120?'✓':'")
+          s = s.replace("const vals=data.map(e=>o20Num(e.protein)),min=Math.min(120,...vals)-5,max=Math.max(170,...vals)+5", "const vals=data.map(e=>o20Num(e.protein)),min=Math.min(100,...vals)-5,max=Math.max(150,...vals)+5")
+          s = s.replace("gy=pt(160,0)[1],gy140=pt(140,0)[1]", "gy=pt(140,0)[1],gy120=pt(120,0)[1]")
+          s = s.replace("y=\"'+gy+'\" x2=\"'+(w-pad)+'\" y2=\"'+gy+'\"></line><text class=\"op20-chart-label\" x=\"22\" y=\"'+(gy-4)+'\">160g</text><line class=\"op20-chart-goal\" x1=\"'+pad+'\" y1=\"'+gy140+'\" x2=\"'+(w-pad)+'\" y2=\"'+gy140+'\" style=\"opacity:.5\"></line><text class=\"op20-chart-label\" x=\"22\" y=\"'+(gy140-4)+'\">140g</text>", "y=\"'+gy+'\" x2=\"'+(w-pad)+'\" y2=\"'+gy+'\"></line><text class=\"op20-chart-label\" x=\"22\" y=\"'+(gy-4)+'\">140g</text><line class=\"op20-chart-goal\" x1=\"'+pad+'\" y1=\"'+gy120+'\" x2=\"'+(w-pad)+'\" y2=\"'+gy120+'\" style=\"opacity:.5\"></line><text class=\"op20-chart-label\" x=\"22\" y=\"'+(gy120-4)+'\">120g</text>")
+          s = s.replace("o20Num(e.protein)>=140?'op20-good':'", "o20Num(e.protein)>=120?'op20-good':'")
+          s = s.replace("o20Num(e.protein)>=160?'★':o20Num(e.protein)>=140?'✓':'", "o20Num(e.protein)>=140?'★':o20Num(e.protein)>=120?'✓':'")
+
+          # URL import: steps, resting HR, HRV, and sleep.
+          s = s.replace("  const bodyFat = cleanNum(params.get('bodyfat'));\n  const leanMass", "  const bodyFat = cleanNum(params.get('bodyfat'));\n  const steps = cleanNum(params.get('steps'));\n  const rhr = cleanNum(params.get('rhr'));\n  const hrv = cleanNum(params.get('hrv'));\n  const sleep = cleanNum(params.get('sleep'));\n  const leanMass")
+          s = s.replace("if (w || cal || prot || carb || ft || active || resting || bodyFat || leanMass || workoutType || workoutFlag)", "if (w || cal || prot || carb || ft || active || resting || bodyFat || steps || rhr || hrv || sleep || leanMass || workoutType || workoutFlag)")
+          s = s.replace("activeCal: active, restingCal: resting, bodyFat: bodyFat, leanMass: leanMass,", "activeCal: active, restingCal: resting, bodyFat: bodyFat, steps: steps, rhr: rhr, hrv: hrv, sleep: sleep, leanMass: leanMass,")
+          s = s.replace("if (entry.bodyFat) parts.push(entry.bodyFat+'% bf');", "if (entry.bodyFat) parts.push(entry.bodyFat+'% bf');\n  if (entry.steps) parts.push(Math.round(parseFloat(entry.steps)).toLocaleString()+' steps');\n  if (entry.rhr) parts.push(Math.round(parseFloat(entry.rhr))+' rhr');\n  if (entry.hrv) parts.push(parseFloat(entry.hrv).toFixed(1)+' hrv');\n  if (entry.sleep) parts.push(parseFloat(entry.sleep).toFixed(1)+'h sleep');")
+          app.write_text(s)
+
+          index = Path('index.html')
+          h = index.read_text()
+          h = h.replace('20 · 160 · 3', '20 · 140 · 3')
+          h = h.replace('Fuel — 160g', 'Fuel — 140g')
+          h = h.replace('logged days ≥140g this week', 'logged days ≥120g this week')
+          h = h.replace('140g is a successful day. 160g is the bullseye.', '120g is a successful day. 140g is the goal.')
+          h = h.replace('160g protein', '140g protein')
+          h = h.replace('160g Protein', '140g Protein')
+          index.write_text(h)
+      - name: Validate JavaScript
+        run: node --check assets/js/app.js
+      - name: Commit updates
+        run: |
+          git config user.name 'ChatGPT Update Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html assets/js/app.js
+          git diff --cached --quiet && exit 0
+          git commit -m 'Update protein targets and Health shortcut sync'
+          git push
