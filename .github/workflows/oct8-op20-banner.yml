@@ -1,0 +1,44 @@
+name: Apply Operation 20 banner update
+on:
+  push:
+    paths:
+      - '.github/workflows/oct8-op20-banner.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use 140 Barbell Strength Banner on Operation 20 home
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old='''    <div class="op20-hero"><div class="nums"><span class="n20">20</span><span class="sep">·</span><span>140</span><span class="sep">·</span><span class="n3">3</span></div></div>'''
+          new='''    <div class="op20-hero op20-strength-banner" aria-label="Operation 20 · 140 · 3"><img src="assets/140 Barbell Strength Banner.png" alt="20 · 140 · 3 strength banner"></div>'''
+          if old not in s:
+              if 'assets/140 Barbell Strength Banner.png' not in s:
+                  raise SystemExit('Operation 20 hero target not found')
+          else:
+              s=s.replace(old,new,1)
+              p.write_text(s)
+
+          css=Path('assets/css/app.css')
+          c=css.read_text()
+          marker='/* Operation 20 strength banner crop — show only inside cyan border; source image remains unchanged. */'
+          block='''\n\n/* Operation 20 strength banner crop — show only inside cyan border; source image remains unchanged. */\n.op20-strength-banner{\n  position:relative;\n  width:100%;\n  aspect-ratio:2020 / 569;\n  min-height:0 !important;\n  padding:0 !important;\n  overflow:hidden;\n  background:none !important;\n  border:0 !important;\n  border-radius:0 !important;\n}\n.op20-strength-banner img{\n  position:absolute;\n  display:block;\n  max-width:none;\n  width:101.386%;\n  height:auto;\n  left:-0.693%;\n  top:-5.10%;\n  margin:0;\n  pointer-events:none;\n  user-select:none;\n}\n'''
+          if marker not in c:
+              css.write_text(c+block)
+          PY
+      - name: Commit banner update
+        shell: bash
+        run: |
+          git config user.name 'ChatGPT Update Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html assets/css/app.css
+          git diff --cached --quiet && exit 0
+          git commit -m 'Use 140 Barbell Strength Banner for Operation 20'
+          git push
