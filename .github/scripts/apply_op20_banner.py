@@ -1,31 +1,36 @@
 from pathlib import Path
-import re
 
-p = Path('index.html')
-s = p.read_text()
+html = Path('index.html')
+s = html.read_text()
+old = '<div class="op20-hero"><div class="nums"><span class="n20">20</span><span class="sep">·</span><span>160</span><span class="sep">·</span><span class="n3">3</span></div></div>'
+new = '<div class="op20-hero op20-strength-banner"><img src="assets/140 Barbell Strength Banner.png" alt="20 · 140 · 3 strength banner"></div>'
+if new not in s:
+    if old not in s:
+        raise SystemExit('Operation 20 hero target not found')
+    s = s.replace(old, new, 1)
+    html.write_text(s)
 
-css_marker = '/* Operation 20 opening banner */'
-css_block = '''/* Operation 20 opening banner */
-#box-phase.op20-strength-banner-shell{
-  position:relative;
-  overflow:visible !important;
-  min-height:0 !important;
-  padding:0 !important;
-  background:none !important;
-  border:none !important;
-  border-radius:0 !important;
-}
-#box-phase.op20-strength-banner-shell::before,
-#box-phase.op20-strength-banner-shell::after{ display:none !important; }
-.op20-strength-banner-frame{
+css = Path('assets/css/app.css')
+c = css.read_text()
+marker = '/* Operation 20 strength banner crop */'
+block = '''
+
+/* Operation 20 strength banner crop */
+.op20-hero.op20-strength-banner{
   position:relative;
   width:100%;
   aspect-ratio:2020 / 569;
+  min-height:0 !important;
+  height:auto !important;
+  padding:0 !important;
   overflow:hidden;
+  background:none !important;
+  border:0 !important;
   border-radius:28px;
-  line-height:0;
 }
-.op20-strength-banner-frame img{
+.op20-hero.op20-strength-banner::before,
+.op20-hero.op20-strength-banner::after{display:none !important;}
+.op20-hero.op20-strength-banner img{
   position:absolute;
   display:block;
   max-width:none;
@@ -38,25 +43,5 @@ css_block = '''/* Operation 20 opening banner */
   user-select:none;
 }
 '''
-
-if css_marker not in s:
-    anchor = '/* Achievement banner */'
-    if anchor not in s:
-        raise SystemExit('CSS anchor not found')
-    s = s.replace(anchor, css_block + '\n' + anchor, 1)
-
-new_box = '''<div id="box-phase" class="op20-strength-banner-shell" onclick="tapBox('box-phase'); openModal('modal-phase')" aria-label="Operation 20 banner">
-  <div class="op20-strength-banner-frame">
-    <img src="assets/140 Barbell Strength Banner.png" alt="20 · 140 · 3 strength banner" />
-  </div>
-</div>
-
-'''
-
-if 'assets/140 Barbell Strength Banner.png' not in s:
-    pattern = r'<div id="box-phase"[\s\S]*?(?=<!-- BOX 2: LOGGING STREAK \+ ROADMAP / PHASE REPORTS -->)'
-    s, n = re.subn(pattern, new_box, s, count=1)
-    if n != 1:
-        raise SystemExit('Phase banner block not found')
-
-p.write_text(s)
+if marker not in c:
+    css.write_text(c + block)
