@@ -556,3 +556,32 @@ body.phase4 #modal-records svg line{stroke:#cbd9dd!important}
   width:30px;height:30px;display:grid;place-items:center;font-size:14px;cursor:pointer;
 }
 .op20-delete:active{border-color:#69d1ff;color:#eef8ff}
+
+
+/* Operation 20 strength banner crop */
+.op20-hero.op20-strength-banner{
+  position:relative;
+  width:100%;
+  aspect-ratio:2020 / 569;
+  min-height:0 !important;
+  height:auto !important;
+  padding:0 !important;
+  overflow:hidden;
+  background:none !important;
+  border:0 !important;
+  border-radius:28px;
+}
+.op20-hero.op20-strength-banner::before,
+.op20-hero.op20-strength-banner::after{display:none !important;}
+.op20-hero.op20-strength-banner img{
+  position:absolute;
+  display:block;
+  max-width:none;
+  width:101.386%;
+  height:auto;
+  left:-0.693%;
+  top:-5.10%;
+  margin:0;
+  pointer-events:none;
+  user-select:none;
+}
