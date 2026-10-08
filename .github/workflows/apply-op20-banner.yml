@@ -16,7 +16,7 @@ jobs:
         run: |
           git config user.name 'ChatGPT Update Bot'
           git config user.email 'actions@users.noreply.github.com'
-          git add index.html
+          git add index.html assets/css/app.css
           git diff --cached --quiet && exit 0
           git commit -m 'Use 140 Barbell Strength Banner on Operation 20'
           git push
