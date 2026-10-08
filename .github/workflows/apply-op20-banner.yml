@@ -1,0 +1,22 @@
+name: Apply Operation 20 banner update
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-op20-banner.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply banner patch
+        run: python .github/scripts/apply_op20_banner.py
+      - name: Commit banner update
+        run: |
+          git config user.name 'ChatGPT Update Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Use 140 Barbell Strength Banner on Operation 20'
+          git push
